@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # samsun_transit
 
 A new Flutter project.
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Samsun-mobil
+>>>>>>> f52d794a46d8a916ce5d0aff878e641c7c8783de
