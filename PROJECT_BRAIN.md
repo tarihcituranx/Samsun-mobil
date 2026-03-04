@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 04.03.2026 23:29
+> **Son güncelleme:** 04.03.2026 23:48
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+15
+- **Sürüm:** 1.0.0+16
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -79,8 +79,8 @@ lib/
 - version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 04.03.2026 23:29
-- Son commit: build: v1.0.0+15 - APK yayınlandı
+- Tarih: 04.03.2026 23:48
+- Son commit: build: v1.0.0+16 - APK yayınlandı
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
@@ -92,9 +92,9 @@ lib/
 
 ## 📜 Git Geçmişi (Son 5)
 ```
+87bd3eb build: v1.0.0+16 - APK yayınlandı
+7f1094b brain: hafıza güncellendi — 04.03.2026 23:29
 4f6a745 build: v1.0.0+15 - APK yayınlandı
 24f8aa4 brain: hafıza güncellendi — 04.03.2026 23:09
 49f4027 build: v1.0.0+14 - APK yayınlandı
-56ff269 Refactor category detection to use grep directly
-a2c5997 brain: hafıza güncellendi — 04.03.2026 22:40
 ```
