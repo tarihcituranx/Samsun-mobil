@@ -2,7 +2,7 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 04.03.2026 09:54
+> **Son güncelleme:** 04.03.2026 10:01
 
 ---
 
