@@ -959,7 +959,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           IconButton(icon: const Icon(Icons.phone, size: 20), tooltip: '153',
-            onPressed: () => _toastInfo("📞 Samsun içi: 153 • Dışı: 0362 431 10 12")),
+            onPressed: () async {
+              final uri = Uri.parse('tel:03624311012');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                if (mounted) _toastInfo("📞 Samsun içi: 153 • Dışı: 0362 431 10 12");
+              }
+            }),
         ],
       ),
       body: Column(

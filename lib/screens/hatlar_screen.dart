@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
@@ -511,14 +512,28 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   }
 
   Widget _banner(Color bg, Color accent, String icon, String title, String body) {
-    return Container(
-      width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withOpacity(0.3))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text("$icon $title", style: TextStyle(fontWeight: FontWeight.bold, color: accent, fontSize: 14)),
-        const SizedBox(height: 4),
-        Text(body, style: TextStyle(color: accent.withOpacity(0.7), fontSize: 12)),
-      ]),
+    // Telefon numarası içeren banner'lara tıklama özelliği ekle
+    final hasPhone = body.contains('0362');
+    return GestureDetector(
+      onTap: hasPhone ? () async {
+        final uri = Uri.parse('tel:03624311012');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        }
+      } : null,
+      child: Container(
+        width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withOpacity(0.3))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text("$icon $title", style: TextStyle(fontWeight: FontWeight.bold, color: accent, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text(body, style: TextStyle(color: accent.withOpacity(0.7), fontSize: 12)),
+          if (hasPhone) ...[
+            const SizedBox(height: 4),
+            Text("📞 Aramak için dokunun", style: TextStyle(color: accent.withOpacity(0.5), fontSize: 10)),
+          ],
+        ]),
+      ),
     );
   }
 

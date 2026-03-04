@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/db_service.dart';
 import '../services/ybs_api_service.dart';
@@ -87,14 +88,22 @@ class _OdakScreenState extends State<OdakScreen> {
       ),
 
       // İletişim
-      Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8), padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: const Color(0xFF152238), borderRadius: BorderRadius.circular(10)),
-        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.phone, size: 16, color: Color(0xFF2979FF)),
-          SizedBox(width: 6),
-          Text("0362 431 10 12", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2979FF), fontSize: 13)),
-        ]),
+      GestureDetector(
+        onTap: () async {
+          final uri = Uri.parse('tel:03624311012');
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8), padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: const Color(0xFF152238), borderRadius: BorderRadius.circular(10)),
+          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.phone, size: 16, color: Color(0xFF2979FF)),
+            SizedBox(width: 6),
+            Text("0362 431 10 12", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2979FF), fontSize: 13)),
+          ]),
+        ),
       ),
 
       // Odak Listesi
