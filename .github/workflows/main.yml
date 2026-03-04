@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0   # git log/tag için tüm geçmiş lazım
+          token: ${{ secrets.APK_REPO_TOKEN }} # <-- SADECE BU SATIRI EKLE
 
       # 2) Flutter kur
       - name: Flutter kur
