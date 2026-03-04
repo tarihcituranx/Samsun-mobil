@@ -66,3 +66,23 @@ jobs:
           name: build-logs-${{ github.run_number }}
           path: logs/
           retention-days: 14
+
+      # 7) Bug raporu artifact (LOG-1)
+      - name: Bug raporunu sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bug-report-${{ github.run_number }}
+          path: /home/runner/bug_report_*.md
+          retention-days: 30
+
+      # 8) Log klasörü artifact (LOG-2)
+      - name: Log klasörünü sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-logs-${{ github.run_number }}
+          path: |
+            logs/
+            scripts/*.log
+          retention-days: 30

@@ -1,6 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samsun_ulasim/services/synchronization_service.dart';
+import 'package:samsun_ulasim/services/background_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -8,56 +11,177 @@ void main() async {
   runApp(const SamsunRouteApp());
 }
 
-class SamsunRouteApp extends StatelessWidget {
+class SamsunRouteApp extends StatefulWidget {
   const SamsunRouteApp({Key? key}) : super(key: key);
+
+  static void setLocale(BuildContext context, Locale locale) {
+    final state = context.findAncestorStateOfType<_SamsunRouteAppState>();
+    state?._changeLocale(locale);
+  }
+
+  static void setThemeMode(BuildContext context, ThemeMode mode) {
+    final state = context.findAncestorStateOfType<_SamsunRouteAppState>();
+    state?._changeThemeMode(mode);
+  }
+
+  @override
+  State<SamsunRouteApp> createState() => _SamsunRouteAppState();
+}
+
+class _SamsunRouteAppState extends State<SamsunRouteApp> {
+  Locale _locale = const Locale('tr');
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPreferences();
+  }
+
+  Future<void> _loadSavedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('language') ?? 'Türkçe';
+    final theme = prefs.getString('theme_mode') ?? 'dark';
+    if (mounted) {
+      setState(() {
+        _locale = lang == 'English' ? const Locale('en') : const Locale('tr');
+        _themeMode = theme == 'light' ? ThemeMode.light
+            : theme == 'system' ? ThemeMode.system
+            : ThemeMode.dark;
+      });
+    }
+  }
+
+  void _changeLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
+
+  void _changeThemeMode(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+  }
+
+  // ─── KARANLIK TEMA ───
+  static ThemeData get _darkTheme => ThemeData(
+    colorSchemeSeed: const Color(0xFF0A1628),
+    brightness: Brightness.dark,
+    useMaterial3: true,
+    scaffoldBackgroundColor: const Color(0xFF0A1628),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0F1E36),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF152238),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2979FF),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF152238),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      hintStyle: const TextStyle(color: Color(0xFF8899AA)),
+      labelStyle: const TextStyle(color: Color(0xFFAABBCC)),
+    ),
+    dividerColor: const Color(0xFF1E3250),
+    // Yazı okunabilirliği: yeterli kontrast sağla
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFFE0E6ED)),
+      bodyMedium: TextStyle(color: Color(0xFFCCD4DD)),
+      bodySmall: TextStyle(color: Color(0xFF99AABB)),
+      titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(color: Color(0xFFE0E6ED), fontWeight: FontWeight.w600),
+      labelLarge: TextStyle(color: Color(0xFFCCD4DD)),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF0F1E36),
+      selectedItemColor: Color(0xFF2979FF),
+      unselectedItemColor: Color(0xFF7A8FA5),
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 10),
+    ),
+  );
+
+  // ─── AYDINLIK TEMA ───
+  static ThemeData get _lightTheme => ThemeData(
+    colorSchemeSeed: const Color(0xFF2979FF),
+    brightness: Brightness.light,
+    useMaterial3: true,
+    scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF2979FF),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5),
+    ),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2979FF),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFEEF1F5),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      hintStyle: const TextStyle(color: Color(0xFF8899AA)),
+      labelStyle: const TextStyle(color: Color(0xFF556677)),
+    ),
+    dividerColor: const Color(0xFFE0E6ED),
+    // Yazı okunabilirliği: koyu metin açık arka plan
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: Color(0xFF1A2940)),
+      bodyMedium: TextStyle(color: Color(0xFF334455)),
+      bodySmall: TextStyle(color: Color(0xFF667788)),
+      titleLarge: TextStyle(color: Color(0xFF0A1628), fontWeight: FontWeight.bold),
+      titleMedium: TextStyle(color: Color(0xFF1A2940), fontWeight: FontWeight.w600),
+      labelLarge: TextStyle(color: Color(0xFF334455)),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: Color(0xFF2979FF),
+      unselectedItemColor: Color(0xFF8899AA),
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 10),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Samsun Ulaşım Sistemi',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF0A1628),
-        brightness: Brightness.dark,
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFF0A1628),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0F1E36),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          titleTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5),
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF152238),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2979FF),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF152238),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.35)),
-          labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-        ),
-        dividerColor: Colors.white.withOpacity(0.08),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color(0xFF0F1E36),
-          selectedItemColor: Color(0xFF2979FF),
-          unselectedItemColor: Color(0xFF546E8A),
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: TextStyle(fontSize: 10),
-        ),
-      ),
+      locale: _locale,
+      supportedLocales: const [Locale('tr'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
+      themeMode: _themeMode,
       home: const _SplashLoader(),
     );
   }
@@ -94,6 +218,8 @@ class _SplashLoaderState extends State<_SplashLoader> with SingleTickerProviderS
     SynchronizationService().runFullSynchronization().catchError((e) {
       debugPrint('Sync error: $e');
     });
+    // BG: Arka plan servisini başlat (batarya dostu)
+    BackgroundService().start();
   }
 
   @override

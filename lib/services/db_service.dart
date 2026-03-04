@@ -43,7 +43,7 @@ class DBService {
       // Önce klasörü oluştur
       try {
         await Directory(dirname(path)).create(recursive: true);
-      } catch (_) {}
+      } catch (e) { debugPrint('DB dizin oluşturma hatası: $e'); }
 
       // Asset'ten byte olarak okumayı dene
       try {
@@ -212,7 +212,7 @@ class DBService {
     try {
       final res = await db.query('fiyat', where: 'hat_code = ?', whereArgs: [hatCode]);
       if (res.isNotEmpty) return res.first;
-    } catch (_) {} // fiyat tablosu yoksa sessizce geç
+    } catch (e) { debugPrint('getFiyat hatası: $e'); } // fiyat tablosu yoksa sessizce geç
     return null;
   }
 

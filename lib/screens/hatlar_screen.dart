@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
@@ -150,7 +151,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
                     leadingIcon = Text(icon, style: const TextStyle(fontSize: 20)); // Tekne için samulas logosu tam uymayabilir, emoji kalabilir veya logo.png eklenebilir.
                   } else if (kat == 'otobus' || kat == 'ring' || kat == 'ekspres' || kat == 'tramvay') {
                     // Ana Samulas taşıtları için logo
-                    leadingIcon = Image.asset('assets/SBB Logo 9.png', width: 28, height: 28, fit: BoxFit.contain, color: Colors.white, colorBlendMode: BlendMode.srcIn); // Beyazlatılmış Icon tarzı kullanım için
+                    leadingIcon = Image.asset('assets/SBB Logo 9.png', width: 28, height: 28, fit: BoxFit.contain);
                   } else {
                     leadingIcon = Text(icon, style: const TextStyle(fontSize: 20));
                   }
@@ -256,7 +257,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
     try {
       final vehicles = await ApiService.getHattakiAraclar(widget.code);
       if (mounted) setState(() => _liveVehicles = vehicles);
-    } catch (_) {}
+    } catch (e) { debugPrint('Araç çekme hatası: $e'); }
   }
 
   @override
@@ -511,14 +512,28 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   }
 
   Widget _banner(Color bg, Color accent, String icon, String title, String body) {
-    return Container(
-      width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withOpacity(0.3))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text("$icon $title", style: TextStyle(fontWeight: FontWeight.bold, color: accent, fontSize: 14)),
-        const SizedBox(height: 4),
-        Text(body, style: TextStyle(color: accent.withOpacity(0.7), fontSize: 12)),
-      ]),
+    // Telefon numarası içeren banner'lara tıklama özelliği ekle
+    final hasPhone = body.contains('0362');
+    return GestureDetector(
+      onTap: hasPhone ? () async {
+        final uri = Uri.parse('tel:03624311012');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        }
+      } : null,
+      child: Container(
+        width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withOpacity(0.3))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text("$icon $title", style: TextStyle(fontWeight: FontWeight.bold, color: accent, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text(body, style: TextStyle(color: accent.withOpacity(0.7), fontSize: 12)),
+          if (hasPhone) ...[
+            const SizedBox(height: 4),
+            Text("📞 Aramak için dokunun", style: TextStyle(color: accent.withOpacity(0.5), fontSize: 10)),
+          ],
+        ]),
+      ),
     );
   }
 

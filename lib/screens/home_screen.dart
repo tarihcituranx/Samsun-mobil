@@ -12,6 +12,7 @@ import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
 import '../services/offline_service.dart';
+import '../services/update_service.dart';
 import 'hatlar_screen.dart';
 import 'samair_screen.dart';
 import 'odak_screen.dart';
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<LatLng> _routePolyline = [];
   List<Map<String, dynamic>> _routeResults = [];
   List<Map<String, dynamic>> _liveVehicles = [];
+  List<Map<String, dynamic>> _activeLineDuraklar = []; // RT-14: Seçili hattın durakları
 
   bool _isLoadingMap = true;
   bool _isLoadingNearby = false;
@@ -88,6 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
     SharedPreferences.getInstance().then((prefs) {
       if (mounted) setState(() => _showNearbyOnly = prefs.getBool('show_nearby_only') ?? false);
     });
+
+    // UPD-11: Uygulama açılışında otomatik güncelleme kontrolü
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateService.checkForUpdate(context);
+    });
   }
 
   @override
@@ -119,9 +126,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     _liveTimer?.cancel();
     _activeLineCode = lineCode;
+    // RT-15: Önceki durakları temizle, yeni hat durakları yükle
+    setState(() => _activeLineDuraklar = []);
+    _loadActiveLineDuraklar(lineCode);
     _toastInfo("📡 $lineCode hattı canlı takip başlatıldı");
     _fetchLiveVehicles();
     _liveTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchLiveVehicles());
+  }
+
+  /// RT-14: Seçili hattın tüm duraklarını haritaya yükle
+  Future<void> _loadActiveLineDuraklar(String lineCode) async {
+    try {
+      final duraklar = await DBService().getDurakGuzergahi(lineCode);
+      if (mounted) {
+        setState(() => _activeLineDuraklar = duraklar);
+        if (duraklar.isNotEmpty) {
+          _toastSuccess("📍 ${duraklar.length} durak haritada gösterildi");
+        }
+      }
+    } catch (e) {
+      debugPrint('Hat durak yükleme hatası: $e');
+    }
   }
 
   Future<void> _fetchLiveVehicles() async {
@@ -160,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() => _myLocation = LatLng(pos.latitude, pos.longitude));
         _toastSuccess("✅ Konum: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}");
-        try { _mapController.move(_myLocation, 14.0); } catch (_) {}
+        try { _mapController.move(_myLocation, 14.0); } catch (e) { debugPrint('Harita taşıma hatası: $e'); }
       }
     } catch (e) {
       _toastError("❌ GPS hatası: $e");
@@ -253,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final url = 'https://samsun-gtfs-rt.onrender.com/api/rota?lat1=${_myLocation.latitude}&lon1=${_myLocation.longitude}&end=$query';
         final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'SamsunMobilApp/2.0'}).timeout(const Duration(seconds: 15));
         if (response.statusCode == 200) {
-          final data = json.decode(response.body);
+          final data = json.decode(utf8.decode(response.bodyBytes));
           if (data is List && data.isNotEmpty) {
             setState(() {
               _routeResults = data.map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r)).toList();
@@ -271,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _toastError("❌ '${_hedefCtrl.text}' için rota bulunamadı");
           }
         } else if (response.statusCode == 400) {
-          final err = json.decode(response.body);
+          final err = json.decode(utf8.decode(response.bodyBytes));
           _toastError("❌ ${err['error'] ?? 'Konum bulunamadı'}");
         } else {
           _toastError("❌ Sunucu hatası");
@@ -430,6 +455,16 @@ class _HomeScreenState extends State<HomeScreen> {
           PolylineLayer(polylines: [
             if (_routePolyline.isNotEmpty)
               Polyline(points: _routePolyline, strokeWidth: 5.0, color: const Color(0xFF2979FF)),
+            // RT-14: Seçili hattın güzergah polyline'ı
+            if (_activeLineDuraklar.isNotEmpty)
+              Polyline(
+                points: _activeLineDuraklar
+                    .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
+                    .map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()))
+                    .toList(),
+                strokeWidth: 4.0,
+                color: const Color(0xFF00BFA5),
+              ),
             Polyline(
               points: const [
                 LatLng(41.321695, 36.323563), // Batıpark (alt istasyon)
@@ -462,6 +497,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Center(child: Icon(Icons.flag, color: Colors.white, size: 18)),
               )),
+            // RT-14/RT-16: Seçili hattın durak marker'ları (tıklanınca durak adı gösterilsin)
+            ..._activeLineDuraklar
+                .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
+                .map((d) {
+              final sira = (d['sira'] as num?)?.toInt() ?? 0;
+              final ad = d['ad']?.toString() ?? 'Durak $sira';
+              return Marker(
+                point: LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()),
+                width: 24, height: 24,
+                child: GestureDetector(
+                  onTap: () {
+                    // RT-16: Durak bilgisi göster
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('📍 $sira. $ad', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: const Color(0xFF00695C),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00BFA5),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Center(child: Text('$sira', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold))),
+                  ),
+                ),
+              );
+            }),
             ..._liveVehicles.map((v) => Marker(
               point: LatLng(v['lat'] as double, v['lon'] as double),
               width: 38, height: 38,
@@ -584,7 +650,16 @@ class _HomeScreenState extends State<HomeScreen> {
           _glassFab(Icons.my_location, () async { await _getLocation(); }),
           const SizedBox(height: 8),
           if (_liveVehicles.isNotEmpty)
-            _glassFab(Icons.directions_bus, () {}, badge: '${_liveVehicles.length}'),
+            _glassFab(Icons.directions_bus, () {
+              // Canlı araç bilgilerini göster
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('🚌 ${_liveVehicles.length} canlı araç takip ediliyor ($_activeLineCode)'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: const Color(0xFF0D47A1),
+                ),
+              );
+            }, badge: '${_liveVehicles.length}'),
         ]),
       ),
       // Durak sayacı
@@ -884,7 +959,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           IconButton(icon: const Icon(Icons.phone, size: 20), tooltip: '153',
-            onPressed: () => _toastInfo("📞 Samsun içi: 153 • Dışı: 0362 431 10 12")),
+            onPressed: () async {
+              final uri = Uri.parse('tel:03624311012');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                if (mounted) _toastInfo("📞 Samsun içi: 153 • Dışı: 0362 431 10 12");
+              }
+            }),
         ],
       ),
       body: Column(

@@ -23,7 +23,7 @@ class UpdateChecker {
 
       if (response.statusCode != 200) return;
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
       final int latestCode = data['versionCode'] ?? 0;
       final String latestVersion = data['latestVersion'] ?? '';
       final String apkUrl = data['apkUrl'] ?? '';

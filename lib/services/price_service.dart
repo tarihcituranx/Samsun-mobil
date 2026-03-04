@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class PriceService {
@@ -21,13 +22,13 @@ class PriceService {
       final response = await http.get(Uri.parse(_pricesUrl)).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         _cachedPrices = data;
         _cacheTime = DateTime.now();
         return _cachedPrices!;
       }
     } catch (e) {
-      print("Dinamik fiyat çekme hatası: $e");
+      debugPrint("Dinamik fiyat çekme hatası: $e");
     }
 
     // Fallback Fiyatlar (Sunucuya ulaşılamazsa)
@@ -57,7 +58,7 @@ class PriceService {
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is Map<String, dynamic> && data['tam_fiyat'] != null) {
           final tam = (data['tam_fiyat'] as num?)?.toDouble() ?? 0.0;
           final ind = (data['indirimli_fiyat'] as num?)?.toDouble() ?? (tam * 0.70); // INDIRIMLI_ORAN ile senkron
@@ -65,7 +66,7 @@ class PriceService {
         }
       }
     } catch (e) {
-      print("Proxy fiyat çekme hatası: $e");
+      debugPrint("Proxy fiyat çekme hatası: $e");
     }
 
     // 2. GitHub prices.json (kategori bazlı fallback)
