@@ -56,7 +56,7 @@ class _OdakScreenState extends State<OdakScreen> {
         ),
         child: Row(
           children: [
-            Image.asset('assets/odak.png', width: 72, height: 72, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const SizedBox(width: 72)),
+            Image.asset('assets/odak.png', width: 56, height: 56, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const SizedBox(width: 56)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
