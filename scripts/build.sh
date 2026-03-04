@@ -23,7 +23,7 @@ APK_REPO_URL_HTTPS="https://github.com/tarihcituranx/test"
 APK_REPO_GIT="https://github.com/tarihcituranx/test.git"
 MAX_APK_KEEP=3
 
-if [ "$CI" = "true" ] && [ -n "$APK_REPO_TOKEN" ]; then
+if ["$IS_CI" ="true" 1: then
   PROJECT_DIR="$GITHUB_WORKSPACE"
   APK_REPO_DIR="$RUNNER_TEMP/apk-dist"
 else
@@ -117,7 +117,7 @@ check_disk() {
 }
 
 setup_git_auth() {
-  if [ "$IS_CI" = "true" ] && [ -n "$APK_REPO_TOKEN" ]; then
+  if [ "$CI" = "true" ] && [ -n "$APK_REPO_TOKEN" ]; then
     git config --global url."https://x-access-token:${APK_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
     log OK "Git kimlik doğrulaması ayarlandı"
   fi
