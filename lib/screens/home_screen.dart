@@ -12,6 +12,7 @@ import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
 import '../services/offline_service.dart';
+import '../services/update_service.dart';
 import 'hatlar_screen.dart';
 import 'samair_screen.dart';
 import 'odak_screen.dart';
@@ -87,6 +88,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     SharedPreferences.getInstance().then((prefs) {
       if (mounted) setState(() => _showNearbyOnly = prefs.getBool('show_nearby_only') ?? false);
+    });
+
+    // UPD-11: Uygulama açılışında otomatik güncelleme kontrolü
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateService.checkForUpdate(context);
     });
   }
 
