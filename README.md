@@ -27,18 +27,21 @@ samples, guidance on mobile development, and a full API reference.
 
 ---
 
+
+---
+
 ## 🏗️ Proje Mimarisi
 
-> Otomatik analiz ile oluşturuldu — 04.03.2026 16:48
+> Otomatik analiz ile oluşturuldu — 04.03.2026 18:00
 
 ### 📊 Genel Bakış
 
 ```
 Samsun Ulaşım Sistemi v1.0.0
 ├── 📱 Flutter Mobil Uygulama
-│   ├── lib/                    (19 dosya, 5772 satır)
+│   ├── lib/                    (19 dosya, 5849 satır)
 │   │   ├── screens/             (10 dosya, 3998 satır)
-│   │   ├── services/            (9 dosya, 1774 satır)
+│   │   ├── services/            (9 dosya, 1851 satır)
 │   │   └── main.dart
 │   ├── android/                (Native Android katmanı)
 │   ├── ios/                    (Native iOS katmanı)
@@ -115,7 +118,7 @@ Kullanıcı Etkileşimi
 | Metrik | Değer |
 |--------|-------|
 | Toplam Dart dosyası | 19 |
-| Toplam satır | 5772 |
+| Toplam satır | 5849 |
 | 📱 Ekranlar (UI sayfaları) | 10 dosya |
 | 🌐 Servisler (API, HTTP, veri katmanı) | 9 dosya |
 
