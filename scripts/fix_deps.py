@@ -113,6 +113,9 @@ KNOWN_FIXES = {
     "connectivity_plus":        "^6.0.3",
     "dio":                      "^5.7.0",
     "cached_network_image_web": "^1.3.1",
+    "flutter_map":            "^6.2.1",
+    "flutter_launcher_icons": "^0.14.4",
+    "flutter_lints":          "^6.0.0",
 }
 
 # ── pubspec.yaml'ı oku ────────────────────────────────────
