@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../services/background_service.dart';
+import '../widgets/settings_section_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -77,8 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // Uygulama Ayarları
-          _sectionHeader('Uygulama Ayarları'),
-          _card([
+          SettingsSectionWidget(title: 'Uygulama Ayarları', children: [
             _switchItem(Icons.notifications, Colors.blue, 'Bildirimler', _notificationsEnabled, (v) {
               setState(() => _notificationsEnabled = v);
               _savePreference('notifications_enabled', v);
@@ -98,8 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // Arka Plan Servisi
-          _sectionHeader('Arka Plan Servisi'),
-          _card([
+          SettingsSectionWidget(title: 'Arka Plan Servisi', children: [
             _switchItem(Icons.sync, Colors.teal, 'Arka Plan Güncelleme', _bgUpdateEnabled, (v) {
               setState(() => _bgUpdateEnabled = v);
               BackgroundService().setBackgroundUpdateEnabled(v);
@@ -113,8 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // Ulaşım Tercihleri
-          _sectionHeader('Ulaşım Tercihleri'),
-          _card([
+          SettingsSectionWidget(title: 'Ulaşım Tercihleri', children: [
             _chevronItem(Icons.directions_bus, const Color(0xFF00BFA5), 'Favori Hatlar',
               subtitle: _favoriHatlar.isEmpty ? 'Henüz yok' : '${_favoriHatlar.length} hat',
               onTap: () => _showFavoriHatlarDialog(context)),
@@ -128,8 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // Veri Yönetimi
-          _sectionHeader('Veri Yönetimi'),
-          _card([
+          SettingsSectionWidget(title: 'Veri Yönetimi', children: [
             _chevronItem(Icons.system_update, Colors.blue, 'Güncelleme Kontrolü', onTap: () => UpdateChecker.check(context, forceCheck: true)),
             _divider(),
             _chevronItem(Icons.refresh, Colors.teal, 'Verileri Yenile', onTap: () => _showDataRefreshDialog(context)),
@@ -139,8 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // Hesap ve Güvenlik
-          _sectionHeader('Hesap ve Güvenlik'),
-          _card([
+          SettingsSectionWidget(title: 'Hesap ve Güvenlik', children: [
             _chevronItem(Icons.vpn_key, Colors.red, 'Admin Panel Girişi', onTap: () async {
               const url = 'https://samsun-gtfs-rt.onrender.com/admin';
               if (await canLaunchUrl(Uri.parse(url))) {
@@ -151,8 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           // Bilgi
-          _sectionHeader('Bilgi'),
-          _card([
+          SettingsSectionWidget(title: 'Bilgi', children: [
             _chevronItem(Icons.description, Colors.grey, 'Kullanım Koşulları', onTap: () => _showTermsDialog(context)),
             _divider(),
             _chevronItem(Icons.privacy_tip, Colors.grey, 'Gizlilik Politikası', onTap: () => _showPrivacyDialog(context)),
@@ -494,24 +489,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tamam', style: TextStyle(color: Color(0xFF2979FF)))),
         ],
       ),
-    );
-  }
-
-  Widget _sectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(title.toUpperCase(), style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
-    );
-  }
-
-  Widget _card(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(children: children),
     );
   }
 
