@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
@@ -189,16 +190,23 @@ class UpdateService {
   }
 
   /// İndirilen APK'yı FileProvider ile aç (UPD-5)
+  /// UPD-5: İndirilen APK'yı FileProvider ile kur
   static Future<void> _installApk(String filePath) async {
     try {
-      final uri = Uri.file(filePath);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        debugPrint('APK dosyası açılamadı: $filePath');
-      }
+      // Android'de APK kurulumu için platform channel kullan
+      const platform = MethodChannel('com.samsun.transit/apk_installer');
+      await platform.invokeMethod('installApk', {'filePath': filePath});
     } catch (e) {
       debugPrint('APK kurulum hatası: $e');
+      // Fallback: url_launcher ile dene
+      try {
+        final uri = Uri.file(filePath);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } catch (e2) {
+        debugPrint('APK fallback kurulum hatası: $e2');
+      }
     }
   }
 }
