@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 # samsun_transit 🇹🇷
 
-A new Flutter project.
+A new Flutter project.By Turan
 
 ## Getting Started
 
