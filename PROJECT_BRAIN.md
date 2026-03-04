@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 04.03.2026 10:26
+> **Son güncelleme:** 04.03.2026 21:01
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+8
+- **Sürüm:** 1.0.0+11
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -17,20 +17,22 @@
 
 ## 🏗️ Mimari
 - **Framework:** Flutter / Dart
-- **State Yönetimi:** (tespit edilecek)
+- **State Yönetimi:** Provider / ChangeNotifier
 - **API:** GTFS-RT + SAMULAŞ REST API
 - **Ortam:** Google Firebase Studio (IDX) — Nix tabanlı
+- **CI/CD:** GitHub Actions → scripts/build.sh
 
 ## 📊 Kod İstatistikleri
-- Dart dosyası: 19
-- Toplam satır: 5737
+- Dart dosyası: 21
+- Toplam satır: 6603
 
 ## 📁 Klasör Yapısı
 lib/
 ├── helpers/  (1 dosya)
+├── l10n/  (0 dosya)
 ├── main.dart
 ├── screens/  (9 dosya)
-├── services/  (8 dosya)
+├── services/  (10 dosya)
 
 ## ✅ Tamamlanan Görevler
 - [x] Proje kurulumu
@@ -74,10 +76,11 @@ lib/
 - Target SDK: 34
 - Gradle: 8.x uyumlu
 - Ortam: Firebase Studio / IDX / Nix
+- version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 04.03.2026 14:57
-- Yapılan: CI/CD düzeltmesi, DB sorunları çözüldü, güvenlik açıkları kapatıldı
+- Tarih: 04.03.2026 21:01
+- Son commit: docs: Proje mimari haritası güncellendi — v1.0.0
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
@@ -85,10 +88,13 @@ lib/
 - APK imzası her release build'de kontrol et
 - flutter pub cache clean bazen gerekebilir
 - local.properties silmek bazen build sorununu çözer
+- Bağımlılık çakışması → scripts/fix_deps.py otomatik halleder
 
 ## 📜 Git Geçmişi (Son 5)
-613a9ff Update build_and_push.sh
-2b508f4 Add files via upload
-2deeea6 Enhance APK build and deployment process
-4731a3f Add files via upload
-e4d80a0 build: v1.0.0+3 - APK yayınlandı ve proje güncellendi
+```
+c7e62fb docs: Proje mimari haritası güncellendi — v1.0.0
+14c5edd build: v1.0.0+11 - APK yayınlandı
+6a7dabd Update build.sh
+c1f5c9b Update build.sh
+1701d14 Create fix_deps.py
+```
