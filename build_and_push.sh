@@ -195,6 +195,12 @@ bash "$MAIN_REPO/scripts/project_map.sh" "$MAIN_REPO"
 bash "$MAIN_REPO/scripts/bug_scan.sh" "$MAIN_REPO"
 success "Analiz ve raporlama tamamlandı."
 
+# ── 11. BEYNİ GÜNCELLE ───────────────────────────────────
+info "Proje beyni güncelleniyor..."
+python3 "$MAIN_REPO/scripts/brain_update.py"
+success "Beyin, projenin en güncel haliyle beslendi."
+
+
 # ── Özet ─────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════╗${NC}"
