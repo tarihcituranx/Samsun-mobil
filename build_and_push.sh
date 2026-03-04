@@ -344,3 +344,6 @@ echo -e "📂 Klasör   : ${CYAN}releases/${FOLDER_NAME}${NC}"
 echo -e "🔗 İndir    : ${CYAN}${APK_DOWNLOAD_URL}${NC}"
 echo -e "📋 Versiyon : ${CYAN}https://github.com/tarihcituranx/test/raw/main/releases/version.json${NC}"
 echo ""
+# dev.nix değiştikten sonra otomatik rebuild için
+echo "⚠️  dev.nix değişti — Ctrl+Shift+P → 'Rebuild Environment' çalıştır"
+echo "   veya: Ctrl+Shift+P → 'Firebase Studio: Hard Restart'"
