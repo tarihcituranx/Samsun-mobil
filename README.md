@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# samsun_transit
+# samsun_transit 🇹🇷
 
 A new Flutter project.
 
