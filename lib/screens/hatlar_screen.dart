@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
+import '../widgets/hat_list_item_widget.dart';
 
 class HatlarScreen extends StatefulWidget {
   final void Function(String lineCode)? onLineSelected;
@@ -141,50 +142,15 @@ class _HatlarScreenState extends State<HatlarScreen> {
                   final kat = h['kat']?.toString() ?? 'otobus';
                   final code = h['code']?.toString() ?? '';
                   final name = h['name']?.toString() ?? code;
-                  final color = _getKatColor(kat);
-                  final icon = _getKatIcon(kat);
 
-                  Widget leadingIcon;
-                  if (kat == 'havalimani') {
-                    leadingIcon = Image.asset('assets/samair.png', width: 28, height: 28, fit: BoxFit.contain);
-                  } else if (kat == 'tekne') {
-                    leadingIcon = Text(icon, style: const TextStyle(fontSize: 20)); // Tekne için samulas logosu tam uymayabilir, emoji kalabilir veya logo.png eklenebilir.
-                  } else if (kat == 'otobus' || kat == 'ring' || kat == 'ekspres' || kat == 'tramvay') {
-                    // Ana Samulas taşıtları için logo
-                    leadingIcon = Image.asset('assets/SBB Logo 9.png', width: 28, height: 28, fit: BoxFit.contain);
-                  } else {
-                    leadingIcon = Text(icon, style: const TextStyle(fontSize: 20));
-                  }
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF152238),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withValues(alpha: 0.1)),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 42, height: 42,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.6)]),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(child: leadingIcon),
-                      ),
-                      title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white)),
-                      subtitle: Text(code, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11)),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                        child: Text(kat.toUpperCase(), style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)),
-                      ),
-                      onTap: () {
-                        // Tam hat kodunu gönder — samsun.py /api/hat/arac akıllı eşleştirme yapar
-                        widget.onLineSelected?.call(code);
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => HatDetailScreen(code: code, name: name, kat: kat)));
-                      },
-                    ),
+                  return HatListItemWidget(
+                    hat: h,
+                    categoryColor: _getKatColor(kat),
+                    categoryIcon: _getKatIcon(kat),
+                    onTap: () {
+                      widget.onLineSelected?.call(code);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => HatDetailScreen(code: code, name: name, kat: kat)));
+                    },
                   );
                 },
               ),
