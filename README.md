@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# samsun_transit 🇹🇷
+# Samsun Ulaşım 🇹🇷
 
 A new Flutter project.By Turan
 
