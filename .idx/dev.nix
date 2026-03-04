@@ -1,12 +1,24 @@
 {pkgs}: {
   channel = "stable-24.05";
+
   packages = [
     pkgs.jdk17
     pkgs.unzip
+    pkgs.curl
+    pkgs.git
+    pkgs.which
+    pkgs.xz
+    (pkgs.python3.withPackages (ps: [
+      ps.pip
+      ps.pyyaml
+    ]))
   ];
+
   idx.extensions = [
-    
+    "Dart-Code.flutter"
+    "Dart-Code.dart-code"
   ];
+
   idx.previews = {
     previews = {
       web = {

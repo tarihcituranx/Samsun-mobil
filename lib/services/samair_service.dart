@@ -15,7 +15,7 @@ class SamAirService {
       final futures = SAMAIR_LINES.map((lineCode) =>
         http.get(
           Uri.parse('$_renderBase/proxy/realtime?lineCode=${Uri.encodeComponent(lineCode)}'),
-          headers: {'User-Agent': 'SamsunMobilApp/2.0', 'Accept': 'application/json'},
+          headers: {'User-Agent': 'samsun_ulasim/2.0', 'Accept': 'application/json'},
         ).timeout(const Duration(seconds: 10)).catchError((_) => http.Response('[]', 200))
       );
       final responses = await Future.wait(futures);

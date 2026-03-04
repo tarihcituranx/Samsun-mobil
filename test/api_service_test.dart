@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:samsun_mobil_app/services/api_service.dart';
+import 'package:samsun_ulasim/services/api_service.dart';
 
 // ApiService'in veri parse mantığını test eden birim testleri.
 // Bu testler gerçek API çağrısı yapmaz, sadece veri işleme fonksiyonlarını doğrular.

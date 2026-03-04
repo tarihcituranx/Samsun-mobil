@@ -52,7 +52,7 @@ class ApiService {
     try {
       final url = Uri.parse('$_renderBase/proxy/smart_stations?stationId=$stopId');
       final response = await http.get(url, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 12));
 
@@ -88,7 +88,7 @@ class ApiService {
     try {
       final url = Uri.parse('$_renderBase/hat/arac/${Uri.encodeComponent(lineCode)}');
       final response = await http.get(url, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 12));
 
@@ -104,7 +104,7 @@ class ApiService {
     try {
       final url = Uri.parse('$_renderBase/proxy/realtime?lineCode=${Uri.encodeComponent(lineCode)}');
       final response = await http.get(url, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 

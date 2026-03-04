@@ -1,0 +1,45 @@
+{pkgs}: {
+  channel = "stable-24.05";
+  packages = [
+    pkgs.jdk17
+    pkgs.unzip
+    pkgs.android-sdk
+    pkgs.android-sdk-cmdline-tools-latest  # Komut satırı araçlarını ekledik.
+    (pkgs.python3.withPackages (ps: [
+      ps.pip
+      ps.pyyaml
+    ]))
+  ];
+  idx.extensions = [
+  ];
+  idx.previews = {
+    previews = {
+      web = {
+        command = [
+          "flutter"
+          "run"
+          "--machine"
+          "-d"
+          "web-server"
+          "--web-hostname"
+          "0.0.0.0"
+          "--web-port"
+          "$PORT"
+        ];
+        manager = "flutter";
+      };
+      android = {
+        command = [
+          "flutter"
+          "run"
+          "--machine"
+          "-d"
+          "android"
+          "-d"
+          "localhost:5555"
+        ];
+        manager = "flutter";
+      };
+    };
+  };
+}

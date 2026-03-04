@@ -24,7 +24,7 @@ class DBService {
 
   Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'samsun_mobil.db');
+    final path = join(dbPath, 'samsun_ulasim.db');
 
     // Cihazda DB yoksa assets'ten kopyala
     final exists = await databaseExists(path);
@@ -35,7 +35,7 @@ class DBService {
       } catch (_) {}
 
       // Asset'ten byte olarak oku
-      final data = await rootBundle.load('assets/samsun_mobil.db');
+      final data = await rootBundle.load('assets/samsun_ulasim.db');
       final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
       // Cihazın hafızasına yaz
@@ -292,4 +292,3 @@ class DBService {
     return allRoutes;
   }
 }
-

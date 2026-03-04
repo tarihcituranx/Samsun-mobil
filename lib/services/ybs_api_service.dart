@@ -20,7 +20,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/admin/config?key=$_adminKey");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 8));
 
@@ -52,7 +52,7 @@ class YbsApiService {
 
       final uri = Uri.parse("$_renderBase/admin/config?key=$_adminKey");
       final response = await http.post(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Content-Type': 'application/x-www-form-urlencoded',
       }, body: params).timeout(const Duration(seconds: 8));
 
@@ -72,7 +72,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/admin/stats?key=$_adminKey");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 8));
 
@@ -90,7 +90,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/proxy_odak");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 12));
 
@@ -109,7 +109,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/proxy_samair_saatler?hatid=$hatId");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 
@@ -128,7 +128,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/proxy_samair_araclar");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 
@@ -147,7 +147,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/proxy_odak_araclar?hatid=$hatId");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 
@@ -165,7 +165,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/hat/fiyat/${Uri.encodeComponent(lineCode)}");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 8));
 
@@ -191,7 +191,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/odak");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 
@@ -210,7 +210,7 @@ class YbsApiService {
     try {
       final uri = Uri.parse("$_renderBase/odak/$hatId/durak");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 

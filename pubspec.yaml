@@ -1,8 +1,8 @@
-name: samsun_mobil_app
+name: samsun_ulasim
 description: "Samsun Mobil Uygulaması"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+3
+version: 1.0.0+5
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -42,8 +42,12 @@ flutter_native_splash:
     color_dark: "#121212"
     image: assets/splash_logo.png
 
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/android_icons/playstore_icon.png"
+
 flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/images/

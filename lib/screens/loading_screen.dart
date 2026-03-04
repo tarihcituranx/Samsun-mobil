@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:samsun_mobil_app/services/update_checker.dart';
+import 'package:samsun_ulasim/services/update_checker.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String message;

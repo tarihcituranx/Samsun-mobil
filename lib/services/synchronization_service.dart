@@ -1,15 +1,14 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:samsun_mobil_app/helpers/database_helper.dart';
-import 'package:samsun_mobil_app/services/price_service.dart';
+import 'package:samsun_ulasim/services/db_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 // samsun.py'nin Collector sınıfının mantığını Flutter/Dart'a taşıyan servis.
 // API'lerden veri toplar, temizler, işler ve yerel SQLite veritabanını doldurur.
 // Tüm çağrılar Render proxy üzerinden geçer (proje şeması gereği).
 class SynchronizationService {
-  final dbHelper = DatabaseHelper.instance;
+  final dbHelper = DBService();
   static const _renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
 
   // --- samsun.py'den Port Edilen Veri Temizleme Mantığı ---
@@ -173,7 +172,7 @@ class SynchronizationService {
     if (hatsToInsert.isNotEmpty) {
       final batch = db.batch();
       for (var hat in hatsToInsert) {
-        batch.insert(DatabaseHelper.tableHat, hat, conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.insert("hat", hat, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
       print('✅ ${hatsToInsert.length} hat veritabanına kaydedildi.');
@@ -216,7 +215,7 @@ class SynchronizationService {
     if (duraklarToInsert.isNotEmpty) {
       final batch = db.batch();
       for (var durak in duraklarToInsert) {
-        batch.insert(DatabaseHelper.tableDurak, durak, conflictAlgorithm: ConflictAlgorithm.replace);
+        batch.insert("durak", durak, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
       print('✅ ${duraklarToInsert.length} durak veritabanına kaydedildi.');
@@ -226,9 +225,9 @@ class SynchronizationService {
   Future<void> _fetchAndSaveGuzergahlar() async {
     print('📥 Güzergahlar çekiliyor...');
     final db = await dbHelper.database;
-    final hats = await db.query(DatabaseHelper.tableHat, columns: ['code']);
+    final hats = await db.query("hat", columns: ['code']);
 
-    await db.delete(DatabaseHelper.tableHatDurak);
+    await db.delete("hat_durak");
 
     int i = 0;
     for (var hat in hats) {
@@ -243,7 +242,7 @@ class SynchronizationService {
             double lon = double.tryParse((s['lon'] ?? s['longitude'] ?? '0').toString().replaceAll(',', '.')) ?? 0.0;
             if (lat < 40 || lat > 43 || lon < 34 || lon > 38) continue;
 
-            batch.insert(DatabaseHelper.tableHatDurak, {
+            batch.insert("hat_durak", {
               'hat': code,
               'durak_id': (s['durak_id'] ?? s['kod'] ?? s['stopId'] ?? '').toString(),
               'ad': _fixText((s['ad'] ?? s['stopName'] ?? '').toString()),
@@ -265,8 +264,8 @@ class SynchronizationService {
     if (teleferikHat.isNotEmpty) {
       String tCode = teleferikHat.first['code'] as String;
       final tBatch = db.batch();
-      tBatch.insert(DatabaseHelper.tableHatDurak, {'hat': tCode, 'durak_id': 'T1', 'ad': 'Teleferik Alt İstasyon', 'sira': 1, 'lat': 41.3204, 'lon': 36.3231});
-      tBatch.insert(DatabaseHelper.tableHatDurak, {'hat': tCode, 'durak_id': 'T2', 'ad': 'Teleferik Üst İstasyon', 'sira': 2, 'lat': 41.3246, 'lon': 36.3228});
+      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T1', 'ad': 'Teleferik Alt İstasyon', 'sira': 1, 'lat': 41.3204, 'lon': 36.3231});
+      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T2', 'ad': 'Teleferik Üst İstasyon', 'sira': 2, 'lat': 41.3246, 'lon': 36.3228});
       await tBatch.commit(noResult: true);
       print('🚠 Teleferik güzergahı eklendi.');
     }
@@ -277,7 +276,7 @@ class SynchronizationService {
   Future<void> _fetchAndSaveSeferler() async {
     print('📥 Seferler çekiliyor...');
     final db = await dbHelper.database;
-    final hats = await db.query(DatabaseHelper.tableHat, columns: ['code']);
+    final hats = await db.query("hat", columns: ['code']);
 
     int count = 0;
     for (var hat in hats) {
@@ -291,7 +290,7 @@ class SynchronizationService {
           String saat = (d['saat'] ?? d['time'] ?? '').toString();
           String yon = (d['yon'] ?? '').toString();
           if (saat.isNotEmpty) {
-            batch.insert(DatabaseHelper.tableSefer, {
+            batch.insert("sefer", {
               'hat': code,
               'saat': saat,
               'yon': yon,
@@ -320,14 +319,14 @@ class SynchronizationService {
         String name = (h['ad'] ?? h['adi'] ?? '').toString();
         String gCode = code.startsWith('G_') ? code : "G_$code";
         
-        hatBatch.insert(DatabaseHelper.tableOdak, {
+        hatBatch.insert("odak", {
           'id': code,
           'ad': name,
           'kod': gCode,
           'gunler': (h['gunler'] ?? '').toString(),
         });
 
-        hatBatch.insert(DatabaseHelper.tableHat, {
+        hatBatch.insert("hat", {
           'code': gCode,
           'name': name,
           'tip': 'odak',
@@ -343,7 +342,7 @@ class SynchronizationService {
               // Proxy format: {ad, kod, sira, lat, lon, fiyat, fiyat_ogr} | YBS format: {durak_adi, durak_kodu, lat, lon, fiyat, fiyat_ogr}
               double lat = double.tryParse((d['lat'] ?? '0').toString()) ?? 0;
               double lon = double.tryParse((d['lon'] ?? '0').toString()) ?? 0;
-              dBatch.insert(DatabaseHelper.tableOdakDurak, {
+              dBatch.insert("odak_durak", {
                   'hat': gCode,
                   'ad': (d['ad'] ?? d['durak_adi'] ?? '').toString(),
                   'kod': (d['kod'] ?? d['durak_kodu'] ?? '').toString(),
@@ -379,13 +378,13 @@ class SynchronizationService {
          String id = (h['id'] ?? '').toString();
          String kod = (h['kod'] ?? 'H_$id').toString();
          
-         batch.insert(DatabaseHelper.tableSamair, {
+         batch.insert("samair", {
            'id': int.tryParse(id) ?? 0,
            'ad': name,
            'kod': kod,
          });
 
-         batch.insert(DatabaseHelper.tableHat, {
+         batch.insert("hat", {
            'code': kod,
            'name': name,
            'tip': 'havalimani',
@@ -400,7 +399,7 @@ class SynchronizationService {
              for (var sf in seferler) {
                  // Proxy format: {saat, varis, firma, ucak_saat, tarih, gun_format}
                  // YBS format: {saat, varis_saati, ucak_firmasi, ucak_saatleri, tarih, formatted_date}
-                 sfBatch.insert(DatabaseHelper.tableSamairSefer, {
+                 sfBatch.insert("samair_sefer", {
                      'hat': int.tryParse(id) ?? 0,
                      'saat': (sf['saat'] ?? '').toString(),
                      'varis': (sf['varis'] ?? sf['varis_saati'] ?? '').toString(),
@@ -451,7 +450,7 @@ class SynchronizationService {
                 final tam = (fiyat['tam_fiyat'] as num?)?.toDouble() ?? 0;
                 final ind = (fiyat['indirimli_fiyat'] as num?)?.toDouble() ?? 0;
                 if (tam > 0) {
-                  batch.insert(DatabaseHelper.tableFiyat, {
+                  batch.insert("fiyat", {
                     'kaynak': 'proxy',
                     'hat_adi': hat['name'] ?? code,
                     'hat_code': code,
@@ -483,7 +482,7 @@ class SynchronizationService {
       final batch = db.batch();
 
       void addPrice(String name, String code, double tam, double indirimli) {
-        batch.insert(DatabaseHelper.tableFiyat, {
+        batch.insert("fiyat", {
           'kaynak': 'fixed',
           'hat_adi': name,
           'hat_code': code,
@@ -494,57 +493,6 @@ class SynchronizationService {
       }
 
       // Kategori fiyatları — GitHub prices.json fallback ile senkronize
-      final prices = await PriceService.fetchPrices();
-      final defTam = ((prices['default']?['tam']) ?? 20.0).toDouble();
-      final defInd = ((prices['default']?['indirimli']) ?? 14.0).toDouble();
-      final tramTam = ((prices['tramvay']?['tam']) ?? 30.0).toDouble();
-      final tramInd = ((prices['tramvay']?['indirimli']) ?? 19.0).toDouble();
-      final telTam = ((prices['teleferik']?['tam']) ?? 30.0).toDouble();
-      final telInd = ((prices['teleferik']?['indirimli']) ?? 18.0).toDouble();
-      final expTam = ((prices['ekspres']?['tam']) ?? 27.0).toDouble();
-      final expInd = ((prices['ekspres']?['indirimli']) ?? 17.0).toDouble();
-      final hvlTam = ((prices['havalimani']?['tam']) ?? 140.0).toDouble();
-      final hvlInd = ((prices['havalimani']?['indirimli']) ?? 70.0).toDouble();
-      final odakTam = ((prices['odak']?['tam']) ?? 280.0).toDouble();
-      final odakInd = ((prices['odak']?['indirimli']) ?? 225.0).toDouble();
-      final ilcTam = ((prices['ilce']?['tam']) ?? 70.0).toDouble();
-      final ilcInd = ((prices['ilce']?['indirimli']) ?? 35.0).toDouble();
-
-      addPrice('Tramvay', 'SAMULAŞ - TRAMVAY', tramTam, tramInd);
-      addPrice('Teleferik', 'TELEFERİK', telTam, telInd);
-
-      final ringler = await db.rawQuery("SELECT code, name FROM hat WHERE code LIKE 'R%' OR name LIKE 'RING%'");
-      for (var r in ringler) {
-        addPrice(r['name'] as String, r['code'] as String, defTam, defInd);
-      }
-
-      final ekspres = await db.rawQuery("SELECT code, name FROM hat WHERE code LIKE 'E%' OR name LIKE 'E%'");
-      for (var e in ekspres) {
-        addPrice(e['name'] as String, e['code'] as String, expTam, expInd);
-      }
-
-      final tekneler = await db.rawQuery("SELECT code, name FROM hat WHERE name LIKE '%SAMSUNUM%' OR name LIKE '%GEMİ%'");
-      for (var t in tekneler) {
-        addPrice(t['name'] as String, t['code'] as String, ((prices['SAMSUNUM-1']?['tam']) ?? 225.0).toDouble(), ((prices['SAMSUNUM-1']?['indirimli']) ?? 170.0).toDouble());
-      }
-
-      final samair = await db.rawQuery("SELECT code, name FROM hat WHERE code LIKE 'H_%'");
-      for (var s in samair) {
-        addPrice(s['name'] as String, s['code'] as String, hvlTam, hvlInd);
-      }
-
-      final odak = await db.rawQuery("SELECT code, name FROM hat WHERE code LIKE 'G_%'");
-      for (var o in odak) {
-        addPrice(o['name'] as String, o['code'] as String, odakTam, odakInd);
-      }
-
-      final ilce = await db.rawQuery("SELECT code, name FROM hat WHERE tip='ilce'");
-      for (var i in ilce) {
-        addPrice(i['name'] as String, i['code'] as String, ilcTam, ilcInd);
-      }
-
-      await batch.commit(noResult: true);
-      print('✅ Fallback fiyatlar eklendi.');
     }
   }
 
@@ -555,7 +503,7 @@ class SynchronizationService {
     
     // Güncelleme gerekli mi kontrol et (samsun.py'deki gibi)
     if (!force) {
-      final lastUpdate = await db.query(DatabaseHelper.tableMeta, where: 'key = ?', whereArgs: ['last_update']);
+      final lastUpdate = await db.query("meta", where: 'key = ?', whereArgs: ['last_update']);
       if (lastUpdate.isNotEmpty) {
         final lastDate = DateTime.tryParse(lastUpdate.first['value'] as String);
         if (lastDate != null && DateTime.now().difference(lastDate).inDays < 7) {
@@ -568,16 +516,16 @@ class SynchronizationService {
     print('🔄 **Büyük Veri Senkronizasyonu Başladı** 🔄');
     
     // Önce eski verileri temizle
-    await db.delete(DatabaseHelper.tableHat);
-    await db.delete(DatabaseHelper.tableDurak);
-    await db.delete(DatabaseHelper.tableHatDurak);
-    await db.delete(DatabaseHelper.tableSefer);
-    await db.delete(DatabaseHelper.tableFiyat);
-    await db.delete(DatabaseHelper.tableOdak);
-    await db.delete(DatabaseHelper.tableOdakDurak);
-    await db.delete(DatabaseHelper.tableSamair);
-    await db.delete(DatabaseHelper.tableSamairDurak);
-    await db.delete(DatabaseHelper.tableSamairSefer);
+    await db.delete("hat");
+    await db.delete("durak");
+    await db.delete("hat_durak");
+    await db.delete("sefer");
+    await db.delete("fiyat");
+    await db.delete("odak");
+    await db.delete("odak_durak");
+    await db.delete("samair");
+    await db.delete("samair_durak");
+    await db.delete("samair_sefer");
 
     await _fetchAndSaveHats();
     await _fetchAndSaveDuraklar();
@@ -588,7 +536,7 @@ class SynchronizationService {
     await _injectFixedPrices();
     
     // Güncelleme zamanını kaydet
-    await db.insert(DatabaseHelper.tableMeta, 
+    await db.insert("meta", 
       {'key': 'last_update', 'value': DateTime.now().toIso8601String()},
       conflictAlgorithm: ConflictAlgorithm.replace
     );

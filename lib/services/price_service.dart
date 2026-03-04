@@ -52,7 +52,7 @@ class PriceService {
     try {
       final uri = Uri.parse("$_renderBase/hat/fiyat/${Uri.encodeComponent(name)}");
       final response = await http.get(uri, headers: {
-        'User-Agent': 'SamsunMobilApp/2.0',
+        'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 8));
 
