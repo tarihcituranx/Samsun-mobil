@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() => _myLocation = LatLng(pos.latitude, pos.longitude));
         _toastSuccess("✅ Konum: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}");
-        try { _mapController.move(_myLocation, 14.0); } catch (_) {}
+        try { _mapController.move(_myLocation, 14.0); } catch (e) { debugPrint('Harita taşıma hatası: $e'); }
       }
     } catch (e) {
       _toastError("❌ GPS hatası: $e");
@@ -650,7 +650,16 @@ class _HomeScreenState extends State<HomeScreen> {
           _glassFab(Icons.my_location, () async { await _getLocation(); }),
           const SizedBox(height: 8),
           if (_liveVehicles.isNotEmpty)
-            _glassFab(Icons.directions_bus, () {}, badge: '${_liveVehicles.length}'),
+            _glassFab(Icons.directions_bus, () {
+              // Canlı araç bilgilerini göster
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('🚌 ${_liveVehicles.length} canlı araç takip ediliyor ($_activeLineCode)'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: const Color(0xFF0D47A1),
+                ),
+              );
+            }, badge: '${_liveVehicles.length}'),
         ]),
       ),
       // Durak sayacı
