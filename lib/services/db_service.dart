@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -54,42 +55,108 @@ class DBService {
       }
     }
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
       version: DatabaseHelper.databaseVersion,
       onCreate: (db, version) => DatabaseHelper.createTables(db),
     );
+
+    // Asset DB'nin eksik tablo/sütunlarını tamamla (bulunamadı hatasını önler)
+    await _ensureSchema(db);
+
+    return db;
+  }
+
+  /// Asset DB ile kod arasındaki şema farkını kapatır.
+  /// Eksik tabloları oluşturur, eksik sütunları ekler, uyumsuz tabloları düzeltir.
+  static Future<void> _ensureSchema(Database db) async {
+    // 1. Eksik tabloları oluştur (IF NOT EXISTS güvenli)
+    await DatabaseHelper.createTables(db);
+
+    // 2. Mevcut tablolarda eksik sütunları ekle
+    await _addColumnIfMissing(db, 'hat', 'kat', 'TEXT');
+    await _addColumnIfMissing(db, 'hat', 'alias', 'TEXT');
+    await _addColumnIfMissing(db, 'hat', 'short_name', 'TEXT');
+    await _addColumnIfMissing(db, 'durak', 'kod', 'TEXT');
+
+    // 3. fiyat tablosu şema uyumsuzluğunu düzelt
+    await _recreateFiyatIfNeeded(db);
+  }
+
+  /// Tabloda eksik sütun varsa ALTER TABLE ile ekler.
+  static Future<void> _addColumnIfMissing(
+      Database db, String table, String column, String type) async {
+    try {
+      final cols = await db.rawQuery('PRAGMA table_info($table)');
+      final names = cols.map((c) => c['name'].toString()).toSet();
+      if (!names.contains(column)) {
+        await db.execute('ALTER TABLE $table ADD COLUMN $column $type');
+      }
+    } catch (e) {
+      debugPrint('_addColumnIfMissing($table.$column) hata: $e');
+    }
+  }
+
+  /// Asset fiyat tablosu farklı şemaya sahipse yeniden oluşturur.
+  static Future<void> _recreateFiyatIfNeeded(Database db) async {
+    try {
+      final cols = await db.rawQuery('PRAGMA table_info(fiyat)');
+      if (cols.isEmpty) return; // tablo yok, createTables zaten oluşturdu
+      final names = cols.map((c) => c['name'].toString()).toSet();
+      // kaynak ve ogrenci_fiyat sütunları yoksa şema uyumsuz demektir
+      if (!names.contains('kaynak') || !names.contains('ogrenci_fiyat')) {
+        await db.execute('DROP TABLE IF EXISTS fiyat');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${DatabaseHelper.tableFiyat} (
+            id INTEGER PRIMARY KEY,
+            kaynak TEXT,
+            hat_adi TEXT,
+            hat_code TEXT,
+            tam_fiyat REAL DEFAULT 0,
+            ogrenci_fiyat REAL DEFAULT 0,
+            guncelleme TEXT
+          )
+        ''');
+      }
+    } catch (e) {
+      debugPrint('_recreateFiyatIfNeeded hata: $e');
+    }
   }
 
   Future<List<Map<String, dynamic>>> getHatlar() async {
     if (_hatlarCache != null) return _hatlarCache!;
-    final db = await database;
-    final raw = await db.query('hat');
-    // Runtime category assignment (DB'de kat sütunu yok)
-    _hatlarCache = raw.map((h) {
-      final m = Map<String, dynamic>.from(h);
-      m['kat'] = _classifyCategory(m['code']?.toString() ?? '', m['name']?.toString() ?? '');
-      return m;
-    }).toList();
+    try {
+      final db = await database;
+      final raw = await db.query('hat');
+      // Runtime category assignment (DB'de kat sütunu yok)
+      _hatlarCache = raw.map((h) {
+        final m = Map<String, dynamic>.from(h);
+        m['kat'] = _classifyCategory(m['code']?.toString() ?? '', m['name']?.toString() ?? '');
+        return m;
+      }).toList();
 
-    // Ek tramvay hatlarını kontrol et ve yoksa ekle
-    final extraTramRoutes = [
-      {'code': 'TRAMVAY-ECZ-TEK-G', 'name': 'ECZANELER-TEKKEKÖY - Gidiş', 'kat': 'tramvay'},
-      {'code': 'TRAMVAY-YRT-BEL', 'name': 'YURTLAR-BELEDİYE EVLERİ TRAMVAY', 'kat': 'tramvay'},
-      {'code': 'TRAMVAY-BEL-YRT-D', 'name': 'BELEDİYE EVLERİ - YURTLAR - Dönüş', 'kat': 'tramvay'},
-      {'code': 'TRAMVAY-TEK-ECZ-D', 'name': 'TEKKEKÖY-ECZANELER - Dönüş', 'kat': 'tramvay'},
-    ];
+      // Ek tramvay hatlarını kontrol et ve yoksa ekle
+      final extraTramRoutes = [
+        {'code': 'TRAMVAY-ECZ-TEK-G', 'name': 'ECZANELER-TEKKEKÖY - Gidiş', 'kat': 'tramvay'},
+        {'code': 'TRAMVAY-YRT-BEL', 'name': 'YURTLAR-BELEDİYE EVLERİ TRAMVAY', 'kat': 'tramvay'},
+        {'code': 'TRAMVAY-BEL-YRT-D', 'name': 'BELEDİYE EVLERİ - YURTLAR - Dönüş', 'kat': 'tramvay'},
+        {'code': 'TRAMVAY-TEK-ECZ-D', 'name': 'TEKKEKÖY-ECZANELER - Dönüş', 'kat': 'tramvay'},
+      ];
 
-    for (final extra in extraTramRoutes) {
-      final exists = _hatlarCache!.any((h) =>
-        h['code']?.toString() == extra['code'] ||
-        (h['name']?.toString() ?? '').toUpperCase().contains(extra['name']!.toUpperCase().split(' - ')[0]));
-      if (!exists) {
-        _hatlarCache!.add(extra);
+      for (final extra in extraTramRoutes) {
+        final exists = _hatlarCache!.any((h) =>
+          h['code']?.toString() == extra['code'] ||
+          (h['name']?.toString() ?? '').toUpperCase().contains(extra['name']!.toUpperCase().split(' - ')[0]));
+        if (!exists) {
+          _hatlarCache!.add(extra);
+        }
       }
-    }
 
-    return _hatlarCache!;
+      return _hatlarCache!;
+    } catch (e, stackTrace) {
+      debugPrint('getHatlar DB hatası: $e\n$stackTrace');
+      return [];
+    }
   }
 
   // samsun.py Collector.kat() mantığı
@@ -120,14 +187,24 @@ class DBService {
 
   Future<List<Map<String, dynamic>>> getDuraklar() async {
     if (_durakCache != null) return _durakCache!;
-    final db = await database;
-    _durakCache = await db.query('durak');
-    return _durakCache!;
+    try {
+      final db = await database;
+      _durakCache = await db.query('durak');
+      return _durakCache!;
+    } catch (e, stackTrace) {
+      debugPrint('getDuraklar DB hatası: $e\n$stackTrace');
+      return [];
+    }
   }
 
   Future<List<Map<String, dynamic>>> getDurakGuzergahi(String hatCode) async {
-    final db = await database;
-    return await db.query('hat_durak', where: 'hat = ?', whereArgs: [hatCode], orderBy: 'sira ASC');
+    try {
+      final db = await database;
+      return await db.query('hat_durak', where: 'hat = ?', whereArgs: [hatCode], orderBy: 'sira ASC');
+    } catch (e, stackTrace) {
+      debugPrint('getDurakGuzergahi DB hatası: $e\n$stackTrace');
+      return [];
+    }
   }
 
   Future<Map<String, dynamic>?> getFiyat(String hatCode) async {
@@ -253,7 +330,7 @@ class DBService {
         });
       }
     } catch (e) {
-      print("Direct Route Error: $e");
+      debugPrint("Direct Route Error: $e");
     }
 
     // 3. One-Transfer Routes (if no direct route found)
@@ -301,7 +378,7 @@ class DBService {
           });
         }
       } catch (e) {
-        print("Transfer Route Error: $e");
+        debugPrint("Transfer Route Error: $e");
       }
     }
 
