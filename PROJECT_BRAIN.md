@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 04.03.2026 10:01
+> **Son güncelleme:** 04.03.2026 10:26
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+5
+- **Sürüm:** 1.0.0+8
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
