@@ -121,38 +121,38 @@ declare -A CAT_LINES
 declare -A CAT_DESC
 
 detect_category() {
+detect_category() {
   local file="$1"
   local dir=$(dirname "$file" | sed "s|$LIB/||")
   local base=$(basename "$file" .dart)
-  local content=$(cat "$file" 2>/dev/null)
 
-  if echo "$content" | grep -q "class.*Screen\|class.*Page\|extends.*StatelessWidget\|extends.*StatefulWidget"; then
+  if grep -q "class.*Screen\|class.*Page\|extends.*StatelessWidget\|extends.*StatefulWidget" "$file"; then
     if echo "$dir" | grep -qi "screen\|page\|view\|ui"; then
       echo "screens"
-    elif echo "$content" | grep -q "Dialog\|dialog\|BottomSheet\|bottomsheet"; then
+    elif grep -q "Dialog\|dialog\|BottomSheet\|bottomsheet" "$file"; then
       echo "widgets"
     else
       echo "screens"
     fi
-  elif echo "$content" | grep -q "class.*Widget\|extends.*StatelessWidget\|extends.*StatefulWidget"; then
+  elif grep -q "class.*Widget\|extends.*StatelessWidget\|extends.*StatefulWidget" "$file"; then
     echo "widgets"
-  elif echo "$content" | grep -q "class.*Provider\|class.*Bloc\|class.*Cubit\|class.*Controller\|class.*ViewModel\|ChangeNotifier\|Riverpod"; then
+  elif grep -q "class.*Provider\|class.*Bloc\|class.*Cubit\|class.*Controller\|class.*ViewModel\|ChangeNotifier\|Riverpod" "$file"; then
     echo "state"
-  elif echo "$content" | grep -q "class.*Repository\|class.*Service\|http\|dio\|ApiClient\|Future.*fetch\|Future.*get"; then
+  elif grep -q "class.*Repository\|class.*Service\|http\|dio\|ApiClient\|Future.*fetch\|Future.*get" "$file"; then
     echo "services"
-  elif echo "$content" | grep -q "class.*Model\|fromJson\|toJson\|@JsonSerializable\|freezed"; then
+  elif grep -q "class.*Model\|fromJson\|toJson\|@JsonSerializable\|freezed" "$file"; then
     echo "models"
-  elif echo "$content" | grep -q "class.*Route\|GoRouter\|Navigator\|MaterialPageRoute"; then
+  elif grep -q "class.*Route\|GoRouter\|Navigator\|MaterialPageRoute" "$file"; then
     echo "routes"
-  elif echo "$content" | grep -q "ThemeData\|ColorScheme\|TextStyle\|AppColors\|AppTheme"; then
+  elif grep -q "ThemeData\|ColorScheme\|TextStyle\|AppColors\|AppTheme" "$file"; then
     echo "theme"
-  elif echo "$content" | grep -q "const\|final.*=\|static.*="; then
+  elif grep -q "const\|final.*=\|static.*=" "$file"; then
     if echo "$base" | grep -qi "constant\|config\|env\|string"; then
       echo "constants"
     else
       echo "utils"
     fi
-  elif echo "$content" | grep -q "extension\|mixin\|typedef"; then
+  elif grep -q "extension\|mixin\|typedef" "$file"; then
     echo "utils"
   elif echo "$dir" | grep -qi "util\|helper\|extension\|mixin"; then
     echo "utils"
