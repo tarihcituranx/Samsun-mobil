@@ -26,7 +26,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       }
     } catch (e) {
       print("Admin Config Error: $e");
@@ -59,7 +59,7 @@ class YbsApiService {
       }, body: params).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         return data['ok'] == true;
       }
     } catch (e) {
@@ -80,7 +80,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       }
     } catch (e) {
       print("Admin Stats Error: $e");
@@ -98,7 +98,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return data;
       }
     } catch (e) {
@@ -117,7 +117,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return data;
       }
     } catch (e) {
@@ -136,7 +136,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return data;
       }
     } catch (e) {
@@ -155,7 +155,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       }
     } catch (e) {
       print("Odak Araclar Proxy Error: $e");
@@ -173,7 +173,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is Map<String, dynamic> && data.containsKey('tam_fiyat')) {
           return data;
         }
@@ -199,7 +199,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List && data.isNotEmpty) return data;
       }
     } catch (e) {
@@ -218,7 +218,7 @@ class YbsApiService {
       }).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return data;
       }
     } catch (e) {

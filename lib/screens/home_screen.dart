@@ -253,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final url = 'https://samsun-gtfs-rt.onrender.com/api/rota?lat1=${_myLocation.latitude}&lon1=${_myLocation.longitude}&end=$query';
         final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'SamsunMobilApp/2.0'}).timeout(const Duration(seconds: 15));
         if (response.statusCode == 200) {
-          final data = json.decode(response.body);
+          final data = json.decode(utf8.decode(response.bodyBytes));
           if (data is List && data.isNotEmpty) {
             setState(() {
               _routeResults = data.map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r)).toList();
@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _toastError("❌ '${_hedefCtrl.text}' için rota bulunamadı");
           }
         } else if (response.statusCode == 400) {
-          final err = json.decode(response.body);
+          final err = json.decode(utf8.decode(response.bodyBytes));
           _toastError("❌ ${err['error'] ?? 'Konum bulunamadı'}");
         } else {
           _toastError("❌ Sunucu hatası");

@@ -73,8 +73,8 @@ class SynchronizationService {
         'User-Agent': 'SamsunMobilApp/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 15));
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        var decoded = json.decode(response.body);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        var decoded = json.decode(utf8.decode(response.bodyBytes));
         if (decoded is Map && decoded.containsKey('data')) return decoded['data'] is List ? decoded['data'] : [];
         if (decoded is List) return decoded;
         return [decoded];
@@ -126,8 +126,8 @@ class SynchronizationService {
         'User-Agent': 'SamsunMobilApp/2.0',
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 15));
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        var decoded = json.decode(response.body);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        var decoded = json.decode(utf8.decode(response.bodyBytes));
         if (decoded is Map && decoded.containsKey('data')) return decoded['data'] is List ? decoded['data'] : [];
         if (decoded is Map && decoded.containsKey('root')) return decoded['root'] is List ? decoded['root'] : [];
         if (decoded is List) return decoded;
@@ -432,7 +432,7 @@ class SynchronizationService {
       ).timeout(const Duration(seconds: 12));
       
       if (response.statusCode == 200) {
-        final hatlar = json.decode(response.body);
+        final hatlar = json.decode(utf8.decode(response.bodyBytes));
         if (hatlar is List && hatlar.isNotEmpty) {
           final batch = db.batch();
           int count = 0;

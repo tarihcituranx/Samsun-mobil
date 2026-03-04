@@ -21,9 +21,9 @@ class SamAirService {
       final responses = await Future.wait(futures);
 
       for (var response in responses) {
-        if (response.statusCode == 200 && response.body.isNotEmpty) {
+        if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
           try {
-            var decodedData = json.decode(response.body);
+            var decodedData = json.decode(utf8.decode(response.bodyBytes));
             List<dynamic> data = decodedData is List ? decodedData : (decodedData is Map && decodedData.containsKey('data') ? decodedData['data'] : [decodedData]);
 
             for (var item in data) {

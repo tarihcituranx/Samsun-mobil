@@ -56,8 +56,8 @@ class ApiService {
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 12));
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final data = json.decode(response.body);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return _cleanSmartStationData(data);
       }
     } catch (e) {
@@ -92,8 +92,8 @@ class ApiService {
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 12));
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final data = json.decode(response.body);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return _parseRealTimeData(data, lineCode);
       }
     } catch (e) {
@@ -108,8 +108,8 @@ class ApiService {
         'Accept': 'application/json',
       }).timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final data = json.decode(response.body);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is List) return _parseRealTimeData(data, lineCode);
       }
     } catch (e) {

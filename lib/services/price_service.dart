@@ -21,7 +21,7 @@ class PriceService {
       final response = await http.get(Uri.parse(_pricesUrl)).timeout(const Duration(seconds: 10));
       
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         _cachedPrices = data;
         _cacheTime = DateTime.now();
         return _cachedPrices!;
@@ -57,7 +57,7 @@ class PriceService {
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data is Map<String, dynamic> && data['tam_fiyat'] != null) {
           final tam = (data['tam_fiyat'] as num?)?.toDouble() ?? 0.0;
           final ind = (data['indirimli_fiyat'] as num?)?.toDouble() ?? (tam * 0.70); // INDIRIMLI_ORAN ile senkron
