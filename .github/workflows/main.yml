@@ -70,8 +70,9 @@ jobs:
 
       # 8) APK'yı dağıtım reposuna gönder
       # NOT: Bu adım cross-repo push yapar. GITHUB_TOKEN buna izin vermez.
-      # Çözüm: Settings → Secrets → APK_REPO_TOKEN adında bir PAT secret oluşturun.
-      # PAT'ın "repo" scope'u olmalıdır.
+      # Çözüm: Bu reponun Settings → Secrets and variables → Actions →
+      #   New repository secret → İsim: APK_REPO_TOKEN
+      #   Değer: GitHub PAT (repo scope'lu, tarihcituranx/test reposuna yazma izni olan)
       - name: APK reposuna gönder
         continue-on-error: true
         env:
@@ -79,7 +80,7 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "⚠️ APK_REPO_TOKEN secret tanımlı değil."
-            echo "ℹ️ Ayarlamak için: Settings → Secrets → New repository secret → APK_REPO_TOKEN"
+            echo "ℹ️ Ayarlamak için: Settings → Secrets and variables → Actions → New repository secret → APK_REPO_TOKEN"
             echo "ℹ️ APK yine de Artifacts olarak indirilebilir."
             exit 0
           fi

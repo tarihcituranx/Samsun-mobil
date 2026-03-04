@@ -24,6 +24,7 @@ class DBService {
   }
 
   /// Sync sonrası önbelleği temizle, böylece güncel veri okunur.
+  /// Not: _db = null yaparak sonraki erişimde _initDB() ile yeniden bağlanmasını sağlar.
   void invalidateCache() {
     _hatlarCache = null;
     _durakCache = null;
