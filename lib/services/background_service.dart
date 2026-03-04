@@ -33,8 +33,6 @@ class BackgroundService {
   // Bildirim callback'i — uygulama katmanından set edilir
   void Function(String title, String body)? onNotification;
 
-  static const String _renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
-
   // 🔋 Batarya koruma sabitleri
   static const int _maxBackoffMinutes = 120;   // Max 2 saat aralığa uzayabilir
   static const int _nightStartHour = 0;        // Gece modu başlangıç
@@ -160,7 +158,7 @@ class BackgroundService {
     try {
       final response = await http
           .get(Uri.parse('https://github.com/tarihcituranx/test/raw/main/releases/version.json'))
-          .timeout(Duration(seconds: _httpTimeoutSeconds));
+          .timeout(const Duration(seconds: _httpTimeoutSeconds));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));

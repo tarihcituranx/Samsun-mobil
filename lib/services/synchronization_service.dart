@@ -480,18 +480,6 @@ class SynchronizationService {
     // Proxy başarısız olduysa fallback: Kategori bazlı varsayılan fiyatlar
     if (!proxySuccess) {
       debugPrint('⚠️ Proxy fiyatlar alınamadı, kategori bazlı fallback kullanılıyor...');
-      final batch = db.batch();
-
-      void addPrice(String name, String code, double tam, double indirimli) {
-        batch.insert("fiyat", {
-          'kaynak': 'fixed',
-          'hat_adi': name,
-          'hat_code': code,
-          'tam_fiyat': tam,
-          'ogrenci_fiyat': indirimli,
-          'guncelleme': now
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      }
 
       // Kategori fiyatları — GitHub prices.json fallback ile senkronize
     }

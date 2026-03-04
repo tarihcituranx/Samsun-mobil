@@ -68,7 +68,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -166,11 +165,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Versiyon
           Center(
-            child: Text('Samsun Ulaşım Sistemi $_appVersion', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6), fontSize: 13)),
+            child: Text('Samsun Ulaşım Sistemi $_appVersion', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6), fontSize: 13)),
           ),
           const SizedBox(height: 4),
           Center(
-            child: Text('By Turan KAYA', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 11, fontStyle: FontStyle.italic)),
+            child: Text('By Turan KAYA', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.4), fontSize: 11, fontStyle: FontStyle.italic)),
           ),
           const SizedBox(height: 16),
         ],
@@ -300,7 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text('Henüz favori hat eklemediniz.\n\nHat detay sayfasından favori ekleyebilirsiniz.',
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
               )
             else
               ...List.generate(_favoriHatlar.length, (i) => ListTile(
@@ -340,7 +339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text('Henüz favori durak eklemediniz.\n\nHaritada durak seçerek favori ekleyebilirsiniz.',
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
               )
             else
               ...List.generate(_favoriDuraklar.length, (i) => ListTile(
@@ -374,9 +373,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('🔄 Verileri Yenile', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Tüm hat, durak ve sefer verileri sunucudan yeniden yüklenecek.\n\nDevam etmek istiyor musunuz?',
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: Colors.white.withOpacity(0.5)))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -406,9 +405,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('🗑️ Önbelleği Temizle', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Uygulama önbelleği temizlenecek. Bu işlem sonrası veriler tekrar yüklenecektir.\n\nDevam etmek istiyor musunuz?',
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: Colors.white.withOpacity(0.5)))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))),
           ElevatedButton(
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
@@ -470,7 +469,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
         const SizedBox(height: 4),
-        Text(body, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+        Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
       ]),
     );
   }
@@ -501,7 +500,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(title.toUpperCase(), style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+      child: Text(title.toUpperCase(), style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
     );
   }
 
@@ -521,7 +520,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _iconBox(IconData icon, Color color) {
     return Container(
       width: 36, height: 36,
-      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
       child: Icon(icon, size: 20, color: color),
     );
   }
@@ -534,18 +533,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(width: 12),
         Expanded(child: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500, fontSize: 14))),
         Switch(value: value, onChanged: onChanged, activeThumbColor: const Color(0xFF00BFA5)),
-      ]),
-    );
-  }
-
-  Widget _infoItem(IconData icon, Color color, String title, String info) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(children: [
-        _iconBox(icon, color),
-        const SizedBox(width: 12),
-        Expanded(child: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500, fontSize: 14))),
-        Text(info, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
       ]),
     );
   }
@@ -564,7 +551,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(subtitle, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
             const SizedBox(width: 4),
           ],
-          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5)),
+          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5)),
         ]),
       ),
     );
@@ -596,7 +583,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(color: subTextColor, fontSize: 13)),
           const SizedBox(height: 12),
           Text('Geliştirici: Turan KAYA', style: TextStyle(color: subTextColor, fontSize: 12, fontStyle: FontStyle.italic)),
-          Text('Versiyon: $_appVersion', style: TextStyle(color: subTextColor.withOpacity(0.6), fontSize: 11)),
+          Text('Versiyon: $_appVersion', style: TextStyle(color: subTextColor.withValues(alpha: 0.6), fontSize: 11)),
           const SizedBox(height: 12),
           Text('İş Ortakları', style: TextStyle(color: subTextColor, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
           const SizedBox(height: 8),

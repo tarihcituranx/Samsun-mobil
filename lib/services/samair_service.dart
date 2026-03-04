@@ -7,13 +7,13 @@ class SamAirService {
   static const String _renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
 
   // H1, H2, H3, H4, H5 hatlarını takip edeceğiz
-  static final List<String> SAMAIR_LINES = ['H1', 'H2', 'H3', 'H4', 'H5'];
+  static final List<String> samairLines = ['H1', 'H2', 'H3', 'H4', 'H5'];
 
   static Future<List<Map<String, dynamic>>> getLiveSamAirBuses() async {
     List<Map<String, dynamic>> allVehicles = [];
 
     try {
-      final futures = SAMAIR_LINES.map((lineCode) =>
+      final futures = samairLines.map((lineCode) =>
         http.get(
           Uri.parse('$_renderBase/proxy/realtime?lineCode=${Uri.encodeComponent(lineCode)}'),
           headers: {'User-Agent': 'samsun_ulasim/2.0', 'Accept': 'application/json'},

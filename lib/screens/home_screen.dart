@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     leading: Icon(isDirect ? Icons.directions_bus : Icons.transfer_within_a_station, color: Colors.white),
                     title: Text(isDirect ? "Direkt Hat" : "Aktarmalı Rota", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(r['desc'] ?? '', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8))),
+                      Text(r['desc'] ?? '', style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
                       const SizedBox(height: 4),
                       Text('💰 $tamFiyat ₺', style: const TextStyle(color: Color(0xFF69F0AE), fontWeight: FontWeight.bold, fontSize: 13)),
                     ]),
@@ -416,9 +416,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMapScreen() {
     if (_isLoadingMap) {
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3, color: const Color(0xFF2979FF).withOpacity(0.7))),
+        SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3, color: const Color(0xFF2979FF).withValues(alpha: 0.7))),
         const SizedBox(height: 20),
-        Text("Duraklar yükleniyor...", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14)),
+        Text("Duraklar yükleniyor...", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
       ]));
     }
     return Stack(children: [
@@ -434,9 +434,9 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: const Color(0xFF1A2940),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: const Text("🎯 Hedef Seçildi", style: TextStyle(color: Colors.white)),
-              content: Text("Bu konuma nasıl giderim?", style: TextStyle(color: Colors.white.withOpacity(0.7))),
+              content: Text("Bu konuma nasıl giderim?", style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text("İptal", style: TextStyle(color: Colors.white.withOpacity(0.5)))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("İptal", style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))),
                 ElevatedButton(
                   onPressed: () { Navigator.pop(context); _calculateRouteFromCoords(latLng.latitude, latLng.longitude); },
                   child: const Text("Rota Hesapla"),
@@ -482,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: const Color(0xFF2979FF),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 3),
-                boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.4), blurRadius: 12, spreadRadius: 3)],
+                boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 3)],
               ),
               child: const Center(child: Icon(Icons.person, color: Colors.white, size: 18)),
             )),
@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.red.shade600,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 12, spreadRadius: 3)],
+                  boxShadow: [BoxShadow(color: Colors.red.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 3)],
                 ),
                 child: const Center(child: Icon(Icons.flag, color: Colors.white, size: 18)),
               )),
@@ -536,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFF2979FF), width: 1.5),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
                 ),
                 child: Center(
                   child: ClipOval(
@@ -563,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFFFF4081),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withOpacity(0.4), blurRadius: 8, spreadRadius: 2)],
+                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)],
                   ),
                   child: const Center(child: Icon(Icons.airline_seat_recline_extra, color: Colors.white, size: 18)),
                 ),
@@ -578,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFFFF4081),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withOpacity(0.4), blurRadius: 8, spreadRadius: 2)],
+                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)],
                   ),
                   child: const Center(child: Icon(Icons.terrain, color: Colors.white, size: 18)),
                 ),
@@ -613,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: const Color(0xFF2979FF),
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.3), blurRadius: 4, spreadRadius: 1)],
+                              boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1)],
                             ),
                             child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 14)),
                           ),
@@ -633,7 +633,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: const Color(0xFF2979FF),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.3), blurRadius: 4, spreadRadius: 1)],
+                        boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1)],
                       ),
                       child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 14)),
                     ),
@@ -667,14 +667,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF0A1628).withOpacity(0.85),
+            color: const Color(0xFF0A1628).withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.location_on, color: Color(0xFF2979FF), size: 14),
             const SizedBox(width: 4),
-            Text("${_duraklar.length} durak", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8))),
+            Text("${_duraklar.length} durak", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8))),
           ]),
         ),
       ),
@@ -683,10 +683,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF152238).withOpacity(0.95),
+              color: const Color(0xFF152238).withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: TextField(
               style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -694,7 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: "Akıllı Durak No girin (Örn: 10101)",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 13),
                 prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF69F0AE), size: 20),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -735,10 +735,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: 48, height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFF152238).withOpacity(0.9),
+          color: const Color(0xFF152238).withValues(alpha: 0.9),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8)],
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8)],
         ),
         child: Stack(children: [
           Center(child: Icon(icon, color: const Color(0xFF2979FF), size: 22)),
@@ -765,10 +765,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F1E36).withOpacity(0.95),
+              color: const Color(0xFF0F1E36).withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: t.color.withOpacity(0.3)),
-              boxShadow: [BoxShadow(color: t.color.withOpacity(0.15), blurRadius: 12)],
+              border: Border.all(color: t.color.withValues(alpha: 0.3)),
+              boxShadow: [BoxShadow(color: t.color.withValues(alpha: 0.15), blurRadius: 12)],
             ),
             child: Row(children: [
               Icon(t.icon, color: t.color, size: 18),
@@ -797,7 +797,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: _yakinDuraklar.isEmpty
             ? Center(child: Padding(padding: const EdgeInsets.all(24),
                 child: Text("Butona basarak GPS'e yakın (1 km) durakları listeleyin.\n\nGPS izni verildiğinden emin olun.",
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.4)))))
+                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.4)))))
             : ListView.builder(
                 itemCount: _yakinDuraklar.length,
                 itemBuilder: (_, i) {
@@ -817,7 +817,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF152238),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                     ),
                     child: ListTile(
                       leading: Container(
@@ -829,8 +829,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Center(child: Text(durakKodu.isEmpty ? '?' : durakKodu, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
                       ),
                       title: Text(d['ad']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                      subtitle: Text("$dist metre", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
-                      trailing: Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3)),
+                      subtitle: Text("$dist metre", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
+                      trailing: Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.3)),
                       onTap: () => _showDurakSheet(d),
                     ),
                   );
@@ -846,7 +846,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text("🧭 Hibrit Rota", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
-        Text("Tramvay öncelikli akıllı rota", style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+        Text("Tramvay öncelikli akıllı rota", style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(14),
@@ -854,7 +854,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(children: [
             const Icon(Icons.my_location, color: Color(0xFF2979FF), size: 20),
             const SizedBox(width: 10),
-            Expanded(child: Text("GPS (${_myLocation.latitude.toStringAsFixed(4)}, ${_myLocation.longitude.toStringAsFixed(4)})", style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7)))),
+            Expanded(child: Text("GPS (${_myLocation.latitude.toStringAsFixed(4)}, ${_myLocation.longitude.toStringAsFixed(4)})", style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)))),
           ]),
         ),
         if (_targetLocation != null) ...[
@@ -862,16 +862,16 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.red.shade900.withOpacity(0.3), Colors.red.shade800.withOpacity(0.2)]),
-              borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withOpacity(0.2)),
+              gradient: LinearGradient(colors: [Colors.red.shade900.withValues(alpha: 0.3), Colors.red.shade800.withValues(alpha: 0.2)]),
+              borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
             ),
             child: Row(children: [
               const Icon(Icons.flag, color: Color(0xFFFF5252), size: 20),
               const SizedBox(width: 10),
               Expanded(child: Text("Hedef: ${_targetLocation!.latitude.toStringAsFixed(4)}, ${_targetLocation!.longitude.toStringAsFixed(4)}",
-                style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7)))),
+                style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)))),
               GestureDetector(onTap: () => setState(() => _targetLocation = null),
-                child: Icon(Icons.close, size: 16, color: Colors.white.withOpacity(0.4))),
+                child: Icon(Icons.close, size: 16, color: Colors.white.withValues(alpha: 0.4))),
             ]),
           ),
         ],
@@ -883,11 +883,11 @@ class _HomeScreenState extends State<HomeScreen> {
             labelText: "Nereye gitmek istiyorsunuz?",
             hintText: "Cadde, mahalle, mekan adı yazın...",
             prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5252)),
-            suffixIcon: IconButton(icon: Icon(Icons.clear, color: Colors.white.withOpacity(0.3)), onPressed: () => _hedefCtrl.clear()),
+            suffixIcon: IconButton(icon: Icon(Icons.clear, color: Colors.white.withValues(alpha: 0.3)), onPressed: () => _hedefCtrl.clear()),
           ),
         ),
         const SizedBox(height: 8),
-        Text("Veya haritada istediğiniz yere uzun basın", style: TextStyle(fontSize: 11, color: Colors.amber.withOpacity(0.6))),
+        Text("Veya haritada istediğiniz yere uzun basın", style: TextStyle(fontSize: 11, color: Colors.amber.withValues(alpha: 0.6))),
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: _isRouting ? null : _calculateRoute,
@@ -899,7 +899,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (_routeResults.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Divider(color: Colors.white.withOpacity(0.08)),
+          Divider(color: Colors.white.withValues(alpha: 0.08)),
           const Text("Bulunan Rotalar:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
           const SizedBox(height: 8),
           ...List.generate(_routeResults.length, (i) {
@@ -916,7 +916,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: Icon(isDirect ? Icons.directions_bus : Icons.transfer_within_a_station, color: Colors.white),
                 title: Text(isDirect ? "Direkt Hat" : "Aktarmalı Rota", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(r['desc'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                  Text(r['desc'] ?? '', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
                   Text('💰 $tamFiyat ₺', style: const TextStyle(color: Color(0xFF69F0AE), fontWeight: FontWeight.bold)),
                 ]),
                 onTap: () {
@@ -1072,7 +1072,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(widget.durak['ad']?.toString() ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text("Durak No: ${widget.durakKod}", style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+            Text("Durak No: ${widget.durakKod}", style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
           ])),
         ]),
         const SizedBox(height: 12),
@@ -1087,7 +1087,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
             if (_loading) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2979FF)))
             else Icon(_araclar.isNotEmpty ? Icons.check_circle : Icons.info, size: 14, color: _araclar.isNotEmpty ? const Color(0xFF69F0AE) : const Color(0xFF546E8A)),
             const SizedBox(width: 8),
-            Expanded(child: Text(_statusMsg, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7)))),
+            Expanded(child: Text(_statusMsg, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)))),
           ]),
         ),
         const SizedBox(height: 12),
@@ -1095,7 +1095,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
           const Expanded(child: Center(child: CircularProgressIndicator(color: Color(0xFF2979FF))))
         else if (_araclar.isEmpty)
           Expanded(child: Center(child: Text("Bu durağa yaklaşan araç yok\n\n(ASIS API yanıt vermedi veya araç yok)",
-            textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.3)))))
+            textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.3)))))
         else
           Expanded(
             child: ListView.builder(
@@ -1114,7 +1114,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
                       child: Center(child: Text("${remaining}dk", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
                     ),
                     title: Text("$lineCode Hattı", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    subtitle: Text("~$remaining dakika", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                    subtitle: Text("~$remaining dakika", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
                   ),
                 );
               },

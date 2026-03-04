@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:samsun_ulasim/helpers/database_helper.dart';
@@ -22,7 +23,8 @@ void main() {
   
   // Before each test, set up the mock handler.
   setUp(() async {
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       if (methodCall.method == 'getApplicationDocumentsDirectory') {
         // Use the system's temp directory for a clean, isolated test environment.
         return Directory.systemTemp.createTempSync('test_db').path;
@@ -33,7 +35,8 @@ void main() {
 
   // After each test, remove the mock handler to avoid conflicts with other tests.
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
   });
   // --- END MOCK SETUP ---
 
@@ -63,17 +66,17 @@ void main() {
 
     // 1. Check if the 'hat' table is populated.
     final hats = await db.query(DatabaseHelper.tableHat);
-    print('Verification: Found ${hats.length} records in \'hat\' table.');
+    debugPrint('Verification: Found ${hats.length} records in \'hat\' table.');
     expect(hats.isNotEmpty, isTrue, reason: 'The \'hat\' table should not be empty after synchronization.');
 
     // 2. Check if the 'durak' table is populated.
     final duraklar = await db.query(DatabaseHelper.tableDurak);
-    print('Verification: Found ${duraklar.length} records in \'durak\' table.');
+    debugPrint('Verification: Found ${duraklar.length} records in \'durak\' table.');
     expect(duraklar.isNotEmpty, isTrue, reason: 'The \'durak\' table should not be empty after synchronization.');
     
     // 3. Check if the 'hat_durak' (route) table is populated.
     final hatDuraklar = await db.query(DatabaseHelper.tableHatDurak);
-    print('Verification: Found ${hatDuraklar.length} records in \'hat_durak\' table.');
+    debugPrint('Verification: Found ${hatDuraklar.length} records in \'hat_durak\' table.');
     expect(hatDuraklar.isNotEmpty, isTrue, reason: 'The \'hat_durak\' table should not be empty after synchronization.');
 
   }, timeout: const Timeout(Duration(minutes: 5))); // Increase timeout for potentially long API calls.

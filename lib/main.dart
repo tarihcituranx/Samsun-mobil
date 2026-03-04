@@ -245,7 +245,7 @@ class _SplashLoaderState extends State<_SplashLoader> with SingleTickerProviderS
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(width: 1, height: 40, color: Colors.white.withOpacity(0.15)),
+                child: Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.15)),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -262,7 +262,7 @@ class _SplashLoaderState extends State<_SplashLoader> with SingleTickerProviderS
                 width: 170, height: 170,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(40),
-                  boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.3), blurRadius: 50, spreadRadius: 10)],
+                  boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withValues(alpha: 0.3), blurRadius: 50, spreadRadius: 10)],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(40),
@@ -282,14 +282,14 @@ class _SplashLoaderState extends State<_SplashLoader> with SingleTickerProviderS
             const SizedBox(height: 28),
             const Text('Samsun Ulaşım Sistemi', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
             const SizedBox(height: 8),
-            Text('Akıllı Toplu Taşıma', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, letterSpacing: 2)),
+            Text('Akıllı Toplu Taşıma', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14, letterSpacing: 2)),
             const SizedBox(height: 40),
-            SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2.5, color: const Color(0xFF2979FF).withOpacity(0.7))),
+            SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2.5, color: const Color(0xFF2979FF).withValues(alpha: 0.7))),
             const Spacer(flex: 3),
             // Kredi
-            Text('By Turan KAYA', style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 12, letterSpacing: 1.5, fontStyle: FontStyle.italic)),
+            Text('By Turan KAYA', style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 12, letterSpacing: 1.5, fontStyle: FontStyle.italic)),
             const SizedBox(height: 4),
-            Container(width: 60, height: 1, color: Colors.white.withOpacity(0.08)),
+            Container(width: 60, height: 1, color: Colors.white.withValues(alpha: 0.08)),
             const SizedBox(height: 16),
           ]),
         ),

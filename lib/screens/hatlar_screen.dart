@@ -21,7 +21,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
   String _searchQuery = '';
   bool _isLoading = true;
 
-  static const Map<String, Map<String, dynamic>> KATEGORILER = {
+  static const Map<String, Map<String, dynamic>> kategoriler = {
     'dil': {'icon': '🌐', 'name': 'Tümü', 'color': Color(0xFF546E8A)},
     'otobus': {'icon': '🚌', 'name': 'Otobüs', 'color': Color(0xFF2979FF)},
     'ekspres': {'icon': '🚀', 'name': 'Ekspres', 'color': Color(0xFF7C4DFF)},
@@ -57,8 +57,8 @@ class _HatlarScreenState extends State<HatlarScreen> {
     });
   }
 
-  Color _getKatColor(String kat) => (KATEGORILER[kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
-  String _getKatIcon(String kat) => (KATEGORILER[kat]?['icon'] as String?) ?? '🚌';
+  Color _getKatColor(String kat) => (kategoriler[kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
+  String _getKatIcon(String kat) => (kategoriler[kat]?['icon'] as String?) ?? '🚌';
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: "Hat ara...",
-            prefixIcon: Icon(Icons.search, size: 20, color: Colors.white.withOpacity(0.4)),
+            prefixIcon: Icon(Icons.search, size: 20, color: Colors.white.withValues(alpha: 0.4)),
             filled: true, fillColor: const Color(0xFF152238),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
@@ -86,7 +86,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
         child: ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          children: KATEGORILER.entries.map((e) {
+          children: kategoriler.entries.map((e) {
             final kat = e.key;
             final info = e.value;
             final count = kat == 'dil' ? _allHatlar.length : _allHatlar.where((h) => (h['kat'] ?? 'otobus') == kat).length;
@@ -101,14 +101,14 @@ class _HatlarScreenState extends State<HatlarScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    gradient: isSelected ? LinearGradient(colors: [c, c.withOpacity(0.7)]) : null,
+                    gradient: isSelected ? LinearGradient(colors: [c, c.withValues(alpha: 0.7)]) : null,
                     color: isSelected ? null : const Color(0xFF152238),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isSelected ? c : Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: isSelected ? c : Colors.white.withValues(alpha: 0.08)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text("${info['icon']} ", style: const TextStyle(fontSize: 12)),
-                    Text("${info['name']} ($count)", style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : Colors.white.withOpacity(0.6))),
+                    Text("${info['name']} ($count)", style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.6))),
                   ]),
                 ),
               ),
@@ -121,11 +121,11 @@ class _HatlarScreenState extends State<HatlarScreen> {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text("${_filteredHatlar.length} hat", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.35))),
+          Text("${_filteredHatlar.length} hat", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.35))),
           if (_selectedKat != 'dil')
             GestureDetector(
               onTap: () { _selectedKat = 'dil'; _filterHatlar(); },
-              child: Text("Filtreyi Temizle ✕", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.35))),
+              child: Text("Filtreyi Temizle ✕", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.35))),
             ),
         ]),
       ),
@@ -133,7 +133,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
       // Hat Listesi
       Expanded(
         child: _filteredHatlar.isEmpty
-            ? Center(child: Text("Hat bulunamadı.", style: TextStyle(color: Colors.white.withOpacity(0.3))))
+            ? Center(child: Text("Hat bulunamadı.", style: TextStyle(color: Colors.white.withValues(alpha: 0.3))))
             : ListView.builder(
                 itemCount: _filteredHatlar.length,
                 itemBuilder: (_, i) {
@@ -161,13 +161,13 @@ class _HatlarScreenState extends State<HatlarScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF152238),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withOpacity(0.1)),
+                      border: Border.all(color: color.withValues(alpha: 0.1)),
                     ),
                     child: ListTile(
                       leading: Container(
                         width: 42, height: 42,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [color, color.withOpacity(0.6)]),
+                          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.6)]),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(child: leadingIcon),
@@ -176,7 +176,7 @@ class _HatlarScreenState extends State<HatlarScreen> {
                       subtitle: Text(code, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11)),
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
                         child: Text(kat.toUpperCase(), style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)),
                       ),
                       onTap: () {
@@ -211,7 +211,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   Timer? _liveTimer;
   final MapController _mapController = MapController();
 
-  Color get _katColor => (_HatlarScreenState.KATEGORILER[widget.kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
+  Color get _katColor => (_HatlarScreenState.kategoriler[widget.kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
 
   @override
   void initState() { super.initState(); _loadData(); _startLiveTracking(); }
@@ -265,7 +265,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.name, style: const TextStyle(fontSize: 14)),
-        backgroundColor: _katColor.withOpacity(0.8),
+        backgroundColor: _katColor.withValues(alpha: 0.8),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF2979FF)))
@@ -276,14 +276,14 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
               if (_fiyat != null) Container(
                 width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [_katColor, _katColor.withOpacity(0.5)]),
+                  gradient: LinearGradient(colors: [_katColor, _katColor.withValues(alpha: 0.5)]),
                   borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: _katColor.withOpacity(0.2), blurRadius: 16, spreadRadius: 2)],
+                  boxShadow: [BoxShadow(color: _katColor.withValues(alpha: 0.2), blurRadius: 16, spreadRadius: 2)],
                 ),
                 child: Column(children: [
-                  Text("Bilet Ücreti", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                  Text("Bilet Ücreti", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
                   Text("₺${(_fiyat!['tam_fiyat'] ?? '--')}", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                  Text("İndirimli: ₺${(_fiyat!['indirimli_fiyat'] ?? '--')}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+                  Text("İndirimli: ₺${(_fiyat!['indirimli_fiyat'] ?? '--')}", style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
                 ]),
               ),
 
@@ -299,7 +299,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
               // Harita
               if (_duraklar.isNotEmpty) Container(
                 height: 250, margin: const EdgeInsets.all(12),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(0.08))),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
                 clipBehavior: Clip.antiAlias,
                 child: FlutterMap(
                   mapController: _mapController,
@@ -340,7 +340,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(colors: [Color(0xFFFF5252), Color(0xFFD50000)]),
                               shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [BoxShadow(blurRadius: 8, color: const Color(0xFFFF5252).withOpacity(0.5))],
+                              boxShadow: [BoxShadow(blurRadius: 8, color: const Color(0xFFFF5252).withValues(alpha: 0.5))],
                             ),
                             child: Center(child: Text(
                               (v['plate']?.toString() ?? '').length > 3 ? (v['plate'].toString()).substring(v['plate'].toString().length - 3) : '🚌',
@@ -356,7 +356,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
 
               // Canlı Araçlar
               if (_liveVehicles.isNotEmpty) ...[
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("🚌 Canlı Araçlar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withOpacity(0.9)))),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("🚌 Canlı Araçlar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withValues(alpha: 0.9)))),
                 ...(_liveVehicles.map((v) {
                   final gunlukYolcu = v['gunlukYolcu'] ?? '0';
                   final seferYolcu = v['seferYolcu'] ?? '0';
@@ -365,7 +365,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: const Color(0xFF1A2940), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFFF5252).withOpacity(0.15))),
+                    decoration: BoxDecoration(color: const Color(0xFF1A2940), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFFF5252).withValues(alpha: 0.15))),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       // Plaka + Hız
                       Row(children: [
@@ -373,7 +373,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                           child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 16))),
                         const SizedBox(width: 10),
                         Expanded(child: Text(v['plate']?.toString() ?? 'Bilinmiyor', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white))),
-                        Text("${v['speed']} km/s", style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.w600)),
+                        Text("${v['speed']} km/s", style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
                       ]),
                       const SizedBox(height: 8),
                       // İstatistikler
@@ -390,7 +390,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
 
               // Sefer Saatleri
               if (_seferler.isNotEmpty) ...[
-                Padding(padding: const EdgeInsets.all(12), child: Text("🕐 Sefer Saatleri (${_seferler.length})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withOpacity(0.9)))),
+                Padding(padding: const EdgeInsets.all(12), child: Text("🕐 Sefer Saatleri (${_seferler.length})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withValues(alpha: 0.9)))),
                 Container(
                   height: 120, margin: const EdgeInsets.symmetric(horizontal: 12),
                   child: GridView.builder(
@@ -401,10 +401,10 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                       final s = _seferler[i];
                       return Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(color: _katColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8), border: Border.all(color: _katColor.withOpacity(0.2))),
+                        decoration: BoxDecoration(color: _katColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8), border: Border.all(color: _katColor.withValues(alpha: 0.2))),
                         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                           Text(s['saat']?.toString() ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: _katColor)),
-                          Text(s['yon']?.toString() ?? '', style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4))),
+                          Text(s['yon']?.toString() ?? '', style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.4))),
                         ]),
                       );
                     },
@@ -413,7 +413,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
               ],
 
               // Durak Listesi
-              Padding(padding: const EdgeInsets.all(12), child: Text("📍 Duraklar (${_duraklar.length})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withOpacity(0.9)))),
+              Padding(padding: const EdgeInsets.all(12), child: Text("📍 Duraklar (${_duraklar.length})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withValues(alpha: 0.9)))),
               ..._duraklar.asMap().entries.map((entry) {
                 final i = entry.key;
                 final d = entry.value;
@@ -438,7 +438,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
                   child: ListTile(
-                    leading: Container(width: 28, height: 28, decoration: BoxDecoration(gradient: LinearGradient(colors: [_katColor, _katColor.withOpacity(0.6)]), borderRadius: BorderRadius.circular(8)),
+                    leading: Container(width: 28, height: 28, decoration: BoxDecoration(gradient: LinearGradient(colors: [_katColor, _katColor.withValues(alpha: 0.6)]), borderRadius: BorderRadius.circular(8)),
                       child: Center(child: Text("${i + 1}", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)))),
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -480,7 +480,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
         Icon(icon, color: _katColor, size: 22),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _katColor)),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4))),
+        Text(label, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.4))),
       ]),
     ));
   }
@@ -488,11 +488,11 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   Widget _vehicleStat(IconData icon, String value, String label) {
     return Expanded(child: Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 12, color: Colors.white.withOpacity(0.4)),
+        Icon(icon, size: 12, color: Colors.white.withValues(alpha: 0.4)),
         const SizedBox(width: 3),
-        Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.7))),
+        Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.7))),
       ]),
-      Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.3))),
+      Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.3))),
     ]));
   }
 
@@ -523,14 +523,14 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
       } : null,
       child: Container(
         width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withOpacity(0.3))),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: accent.withValues(alpha: 0.3))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text("$icon $title", style: TextStyle(fontWeight: FontWeight.bold, color: accent, fontSize: 14)),
           const SizedBox(height: 4),
-          Text(body, style: TextStyle(color: accent.withOpacity(0.7), fontSize: 12)),
+          Text(body, style: TextStyle(color: accent.withValues(alpha: 0.7), fontSize: 12)),
           if (hasPhone) ...[
             const SizedBox(height: 4),
-            Text("📞 Aramak için dokunun", style: TextStyle(color: accent.withOpacity(0.5), fontSize: 10)),
+            Text("📞 Aramak için dokunun", style: TextStyle(color: accent.withValues(alpha: 0.5), fontSize: 10)),
           ],
         ]),
       ),
@@ -573,16 +573,16 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
           // Plaka + Hız
           Row(children: [
             Container(width: 48, height: 48,
-              decoration: BoxDecoration(gradient: LinearGradient(colors: [_katColor, _katColor.withOpacity(0.6)]), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(gradient: LinearGradient(colors: [_katColor, _katColor.withValues(alpha: 0.6)]), borderRadius: BorderRadius.circular(12)),
               child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 24))),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-              Text(widget.name, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5))),
+              Text(widget.name, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5))),
             ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: _katColor.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: _katColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
               child: Text('$speed km/s', style: TextStyle(fontWeight: FontWeight.bold, color: _katColor, fontSize: 16)),
             ),
           ]),
@@ -601,7 +601,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
           ]),
           if (updateStr.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Son güncelleme: $updateStr', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3))),
+            Text('Son güncelleme: $updateStr', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.3))),
           ]
         ]),
       ),
@@ -614,10 +614,10 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 3),
       decoration: BoxDecoration(color: const Color(0xFF1A2940), borderRadius: BorderRadius.circular(10)),
       child: Column(children: [
-        Icon(icon, size: 18, color: _katColor.withOpacity(0.7)),
+        Icon(icon, size: 18, color: _katColor.withValues(alpha: 0.7)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
-        Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4))),
+        Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.4))),
       ]),
     ));
   }

@@ -23,13 +23,6 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
   // Çarşamba Havaalanı Konumu
   final LatLng _airportLocation = const LatLng(41.2589, 36.5564);
 
-  final List<Map<String, dynamic>> _lines = [
-    {'id': 3, 'code': 'H1', 'name': 'OMÜ - İlkadım', 'color': const Color(0xFF2979FF)},
-    {'id': 4, 'code': 'H2', 'name': 'TTTM - Canik', 'color': const Color(0xFF00BFA5)},
-    {'id': 5, 'code': 'H3', 'name': 'Bafra - 19 Mayıs', 'color': const Color(0xFFFF5252)},
-    {'id': 9, 'code': 'H4', 'name': 'Çarşamba - Salıpazarı', 'color': const Color(0xFFFFAB00)},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -175,7 +168,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                           gradient: const LinearGradient(colors: [Color(0xFF2979FF), Color(0xFF00BFA5)]),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [BoxShadow(blurRadius: 8, color: const Color(0xFF2979FF).withOpacity(0.5))],
+                          boxShadow: [BoxShadow(blurRadius: 8, color: const Color(0xFF2979FF).withValues(alpha: 0.5))],
                         ),
                         child: Center(
                           child: Text(
@@ -196,7 +189,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
           Center(
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: const Color(0xFF152238).withOpacity(0.9), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: const Color(0xFF152238).withValues(alpha: 0.9), borderRadius: BorderRadius.circular(16)),
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -214,7 +207,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
             decoration: BoxDecoration(
               color: const Color(0xFF152238),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -229,14 +222,14 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFF2979FF).withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: const Color(0xFF2979FF).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
                         child: Text("${_liveBuses.length} Araç", style: const TextStyle(color: Color(0xFF2979FF), fontWeight: FontWeight.bold)),
                       )
                     ],
                   ),
                   const Divider(color: Colors.white12, height: 24),
                   if (_liveBuses.isEmpty && !_isLoading)
-                     Text("Şu anda hareket halinde olan SAMAIR aracı bulunmuyor.", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                     Text("Şu anda hareket halinde olan SAMAIR aracı bulunmuyor.", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
                   if (_liveBuses.isNotEmpty)
                     SizedBox(
                       height: 40,
@@ -254,7 +247,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                               onTap: () => _showSamairDetail(context, b, plaka, hizi, hatKodu),
                               child: Chip(
                                 avatar: CircleAvatar(
-                                  backgroundColor: Colors.white.withOpacity(0.05),
+                                  backgroundColor: Colors.white.withValues(alpha: 0.05),
                                   radius: 20,
                                   child: const Icon(Icons.flight_takeoff, color: Colors.white70),
                                 ),
@@ -311,11 +304,11 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(plaka, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-              if (hatKodu.isNotEmpty) Text(hatKodu, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5))),
+              if (hatKodu.isNotEmpty) Text(hatKodu, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5))),
             ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: const Color(0xFF2979FF).withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: const Color(0xFF2979FF).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
               child: Text('$hizi km/s', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2979FF), fontSize: 16)),
             ),
           ]),
@@ -333,7 +326,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
           ]),
           if (updateStr.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Son güncelleme: $updateStr', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3))),
+            Text('Son güncelleme: $updateStr', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.3))),
           ]
         ]),
       ),
@@ -346,10 +339,10 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
       margin: const EdgeInsets.symmetric(horizontal: 3),
       decoration: BoxDecoration(color: const Color(0xFF1A2940), borderRadius: BorderRadius.circular(10)),
       child: Column(children: [
-        Icon(icon, size: 18, color: const Color(0xFF2979FF).withOpacity(0.7)),
+        Icon(icon, size: 18, color: const Color(0xFF2979FF).withValues(alpha: 0.7)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
-        Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4))),
+        Text(label, style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.4))),
       ]),
     ));
   }
@@ -392,8 +385,6 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
   }
 
   void _filterByDate() {
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final selectedStr = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
 
     setState(() {
@@ -469,9 +460,9 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.15),
+                    color: widget.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: widget.color.withOpacity(0.3)),
+                    border: Border.all(color: widget.color.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -501,11 +492,11 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.airplanemode_inactive, size: 48, color: Colors.white.withOpacity(0.2)),
+                      Icon(Icons.airplanemode_inactive, size: 48, color: Colors.white.withValues(alpha: 0.2)),
                       const SizedBox(height: 16),
-                      Text("Bu tarihte sefer bulunamadı.", style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                      Text("Bu tarihte sefer bulunamadı.", style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
                       const SizedBox(height: 8),
-                      Text(dateStr, style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 12)),
+                      Text(dateStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12)),
                     ],
                   ),
                 )
@@ -525,7 +516,7 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF152238),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: widget.color.withOpacity(0.3)),
+                        border: Border.all(color: widget.color.withValues(alpha: 0.3)),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -536,15 +527,15 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.calendar_today, size: 12, color: Colors.white.withOpacity(0.4)),
+                                    Icon(Icons.calendar_today, size: 12, color: Colors.white.withValues(alpha: 0.4)),
                                     const SizedBox(width: 6),
                                     Text(
                                       tarih.length >= 10 ? tarih.substring(0, 10) : tarih,
-                                      style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
                                     ),
                                     if (note.isNotEmpty) ...[
                                       const Spacer(),
-                                      Text(note, style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
+                                      Text(note, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
                                     ],
                                   ],
                                 ),
@@ -556,22 +547,22 @@ class _SamAirScheduleTabState extends State<_SamAirScheduleTab> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("Şehir Kalkış", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                                      Text("Şehir Kalkış", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
                                       Text(cityTime, style: TextStyle(color: widget.color, fontSize: 24, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
                                 ),
                                 // Flight Icon
-                                Icon(Icons.flight_takeoff, color: Colors.white.withOpacity(0.2), size: 32),
+                                Icon(Icons.flight_takeoff, color: Colors.white.withValues(alpha: 0.2), size: 32),
                                 // Uçuş Saati
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text("Uçuş Saati", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                                      Text("Uçuş Saati", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
                                       Text(flightTime, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                                       if (flightNo.isNotEmpty)
-                                        Text(flightNo, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+                                        Text(flightNo, style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10)),
                                     ],
                                   ),
                                 ),
