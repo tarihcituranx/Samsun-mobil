@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:samsun_ulasim/constants.dart';
 import 'package:samsun_ulasim/services/db_service.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -157,8 +158,8 @@ class GtfsSyncService {
       }
     }
 
-    duraklarToInsert.add({'id': 'T1', 'kod': 'T1', 'ad': 'Batıpark (Teleferik Alt İstasyon)', 'lat': 41.321695, 'lon': 36.323563});
-    duraklarToInsert.add({'id': 'T2', 'kod': 'T2', 'ad': 'Amisos Tepesi (Teleferik Üst İstasyon)', 'lat': 41.318939, 'lon': 36.322455});
+    duraklarToInsert.add({'id': 'T1', 'kod': 'T1', 'ad': teleferikAltAd, 'lat': teleferikAltLat, 'lon': teleferikAltLon});
+    duraklarToInsert.add({'id': 'T2', 'kod': 'T2', 'ad': teleferikUstAd, 'lat': teleferikUstLat, 'lon': teleferikUstLon});
 
     if (duraklarToInsert.isNotEmpty) {
       final batch = db.batch();
@@ -212,8 +213,8 @@ class GtfsSyncService {
     if (teleferikHat.isNotEmpty) {
       String tCode = teleferikHat.first['code'] as String;
       final tBatch = db.batch();
-      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T1', 'ad': 'Batıpark (Teleferik Alt İstasyon)', 'sira': 1, 'lat': 41.321695, 'lon': 36.323563});
-      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T2', 'ad': 'Amisos Tepesi (Teleferik Üst İstasyon)', 'sira': 2, 'lat': 41.318939, 'lon': 36.322455});
+      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T1', 'ad': teleferikAltAd, 'sira': 1, 'lat': teleferikAltLat, 'lon': teleferikAltLon});
+      tBatch.insert("hat_durak", {'hat': tCode, 'durak_id': 'T2', 'ad': teleferikUstAd, 'sira': 2, 'lat': teleferikUstLat, 'lon': teleferikUstLon});
       await tBatch.commit(noResult: true);
       debugPrint('🚠 Teleferik güzergahı eklendi.');
     }

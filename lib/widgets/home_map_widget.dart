@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:samsun_ulasim/constants.dart';
 
 class HomeMapWidget extends StatelessWidget {
   final MapController mapController;
@@ -104,8 +105,8 @@ class HomeMapWidget extends StatelessWidget {
               ),
             Polyline(
               points: const [
-                LatLng(41.321695, 36.323563), // Batıpark (alt istasyon)
-                LatLng(41.318939, 36.322455), // Amisos Tepesi (üst istasyon)
+                LatLng(teleferikAltLat, teleferikAltLon), // Batıpark (alt istasyon)
+                LatLng(teleferikUstLat, teleferikUstLon), // Amisos Tepesi (üst istasyon)
               ],
               strokeWidth: 3.5,
               color: const Color(0xFFFF4081),
@@ -192,9 +193,9 @@ class HomeMapWidget extends StatelessWidget {
             )).toList(),
             // Teleferik İstasyonları
             Marker(
-              point: const LatLng(41.321695, 36.323563), width: 40, height: 40,
+              point: const LatLng(teleferikAltLat, teleferikAltLon), width: 40, height: 40,
               child: Tooltip(
-                message: 'Batıpark (Teleferik Alt İstasyon)',
+                message: teleferikAltAd,
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF4081),
@@ -207,9 +208,9 @@ class HomeMapWidget extends StatelessWidget {
               ),
             ),
             Marker(
-              point: const LatLng(41.318939, 36.322455), width: 40, height: 40,
+              point: const LatLng(teleferikUstLat, teleferikUstLon), width: 40, height: 40,
               child: Tooltip(
-                message: 'Amisos Tepesi (Teleferik Üst İstasyon)',
+                message: teleferikUstAd,
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF4081),

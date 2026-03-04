@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:samsun_ulasim/constants.dart';
 import 'package:samsun_ulasim/services/update_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -494,7 +495,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (hasPhone)
           GestureDetector(
             onTap: () async {
-              final uri = Uri.parse('tel:03624311012');
+              final uri = Uri.parse('tel:$samulasTelefon');
               if (await canLaunchUrl(uri)) await launchUrl(uri);
             },
             child: Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, decoration: TextDecoration.underline)),
