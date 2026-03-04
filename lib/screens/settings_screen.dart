@@ -22,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _appVersion = '';
   bool _bgUpdateEnabled = true;
   bool _bgNotificationsEnabled = true;
+  String _selectedTheme = 'dark'; // dark, light, system
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _favoriDuraklar = prefs.getStringList('favori_duraklar') ?? [];
       _bgUpdateEnabled = prefs.getBool('bg_update_enabled') ?? true;
       _bgNotificationsEnabled = prefs.getBool('bg_notifications_enabled') ?? true;
+      _selectedTheme = prefs.getString('theme_mode') ?? 'dark';
     });
   }
 
@@ -66,12 +68,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1628),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('⚙️ Ayarlar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: const Color(0xFF0F1E36),
-        elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -89,7 +90,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _savePreference('show_nearby_only', v);
             }),
             _divider(),
-            _infoItem(Icons.dark_mode, Colors.purple, 'Tema', 'Karanlık Mod'),
+            _chevronItem(Icons.palette, Colors.purple, 'Tema',
+              subtitle: _selectedTheme == 'light' ? 'Aydınlık' : _selectedTheme == 'system' ? 'Otomatik' : 'Karanlık',
+              onTap: () => _showThemeDialog(context)),
             _divider(),
             _chevronItem(Icons.language, Colors.orange, 'Dil Seçimi', subtitle: _selectedLanguage, onTap: () => _showLanguageDialog(context)),
           ]),
@@ -163,14 +166,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Versiyon
           Center(
-            child: Text('Samsun Ulaşım Sistemi $_appVersion', style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 13)),
+            child: Text('Samsun Ulaşım Sistemi $_appVersion', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6), fontSize: 13)),
           ),
           const SizedBox(height: 4),
           Center(
-            child: Text('By Turan KAYA', style: TextStyle(color: Colors.white.withOpacity(0.15), fontSize: 11, fontStyle: FontStyle.italic)),
+            child: Text('By Turan KAYA', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 11, fontStyle: FontStyle.italic)),
           ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  // ─── TEMA SEÇİMİ (3 MOD) ───
+  void _showThemeDialog(BuildContext context) {
+    final themes = [
+      {'key': 'dark', 'label': 'Karanlık', 'icon': Icons.dark_mode},
+      {'key': 'light', 'label': 'Aydınlık', 'icon': Icons.light_mode},
+      {'key': 'system', 'label': 'Otomatik (Sistem)', 'icon': Icons.brightness_auto},
+    ];
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).cardTheme.color ?? const Color(0xFF152238),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(children: [
+          Icon(Icons.palette, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          const Text('Tema Seçimi', style: TextStyle(fontWeight: FontWeight.bold)),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: themes.map((t) => RadioListTile<String>(
+            title: Row(children: [
+              Icon(t['icon'] as IconData, size: 20),
+              const SizedBox(width: 8),
+              Text(t['label'] as String),
+            ]),
+            value: t['key'] as String,
+            groupValue: _selectedTheme,
+            activeColor: Theme.of(context).colorScheme.primary,
+            onChanged: (v) {
+              setState(() => _selectedTheme = v!);
+              _savePreference('theme_mode', v!);
+              final mode = v == 'light' ? ThemeMode.light
+                  : v == 'system' ? ThemeMode.system
+                  : ThemeMode.dark;
+              SamsunRouteApp.setThemeMode(context, mode);
+              Navigator.pop(ctx);
+            },
+          )).toList(),
+        ),
       ),
     );
   }
@@ -181,16 +227,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🌐 Dil Seçimi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('🌐 Dil Seçimi', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: languages.map((lang) => RadioListTile<String>(
-            title: Text(lang, style: const TextStyle(color: Colors.white)),
+            title: Text(lang),
             value: lang,
             groupValue: _selectedLanguage,
-            activeColor: const Color(0xFF2979FF),
+            activeColor: Theme.of(context).colorScheme.primary,
             onChanged: (v) {
               setState(() => _selectedLanguage = v!);
               _savePreference('language', v!);
@@ -214,16 +260,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🚌 Varsayılan Ulaşım Türü', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('🚌 Varsayılan Ulaşım Türü', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: types.map((t) => RadioListTile<String>(
             title: Row(children: [
               Icon(t['icon'] as IconData, color: Colors.white70, size: 20),
               const SizedBox(width: 8),
-              Text(t['name'] as String, style: const TextStyle(color: Colors.white)),
+              Text(t['name'] as String, style: const TextStyle()),
             ]),
             value: t['name'] as String,
             groupValue: _defaultTransport,
@@ -244,9 +290,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('⭐ Favori Hatlar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('⭐ Favori Hatlar', style: TextStyle(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -259,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             else
               ...List.generate(_favoriHatlar.length, (i) => ListTile(
                 leading: const Icon(Icons.directions_bus, color: Color(0xFF00BFA5)),
-                title: Text(_favoriHatlar[i], style: const TextStyle(color: Colors.white)),
+                title: Text(_favoriHatlar[i], style: const TextStyle()),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Color(0xFFFF5252), size: 20),
                   onPressed: () {
@@ -284,9 +330,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('📍 Favori Duraklar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('📍 Favori Duraklar', style: TextStyle(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -299,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             else
               ...List.generate(_favoriDuraklar.length, (i) => ListTile(
                 leading: const Icon(Icons.location_on, color: Color(0xFF00BFA5)),
-                title: Text(_favoriDuraklar[i], style: const TextStyle(color: Colors.white)),
+                title: Text(_favoriDuraklar[i], style: const TextStyle()),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Color(0xFFFF5252), size: 20),
                   onPressed: () {
@@ -324,9 +370,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🔄 Verileri Yenile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('🔄 Verileri Yenile', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Tüm hat, durak ve sefer verileri sunucudan yeniden yüklenecek.\n\nDevam etmek istiyor musunuz?',
           style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
         actions: [
@@ -356,9 +402,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🗑️ Önbelleği Temizle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('🗑️ Önbelleği Temizle', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Uygulama önbelleği temizlenecek. Bu işlem sonrası veriler tekrar yüklenecektir.\n\nDevam etmek istiyor musunuz?',
           style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
         actions: [
@@ -399,9 +445,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('📄 Kullanım Koşulları', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('📄 Kullanım Koşulları', style: TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _termsSection('1. Genel', 'Bu uygulama Samsun Büyükşehir Belediyesi toplu taşıma hizmetleri hakkında bilgi sağlamak amacıyla geliştirilmiştir.'),
@@ -434,9 +480,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('🔒 Gizlilik Politikası', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('🔒 Gizlilik Politikası', style: TextStyle(fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _termsSection('Konum Verisi', 'Konum bilginiz yalnızca yakın durak tespiti ve rota hesaplama için cihazınızda işlenir. Sunucuya gönderilmez.'),
@@ -455,22 +501,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(title.toUpperCase(), style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+      child: Text(title.toUpperCase(), style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
     );
   }
 
   Widget _card(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF152238),
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _divider() => Divider(height: 1, color: Colors.white.withOpacity(0.05), indent: 56);
+  Widget _divider() => Divider(height: 1, color: Theme.of(context).dividerColor, indent: 56);
 
   Widget _iconBox(IconData icon, Color color) {
     return Container(
@@ -486,7 +532,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(children: [
         _iconBox(icon, color),
         const SizedBox(width: 12),
-        Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14))),
+        Expanded(child: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500, fontSize: 14))),
         Switch(value: value, onChanged: onChanged, activeThumbColor: const Color(0xFF00BFA5)),
       ]),
     );
@@ -498,8 +544,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(children: [
         _iconBox(icon, color),
         const SizedBox(width: 12),
-        Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14))),
-        Text(info, style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 13)),
+        Expanded(child: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500, fontSize: 14))),
+        Text(info, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
       ]),
     );
   }
@@ -513,24 +559,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(children: [
           _iconBox(icon, color),
           const SizedBox(width: 12),
-          Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14))),
+          Expanded(child: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500, fontSize: 14))),
           if (subtitle != null) ...[
-            Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 13)),
+            Text(subtitle, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
             const SizedBox(width: 4),
           ],
-          Icon(Icons.chevron_right, size: 16, color: Colors.white.withOpacity(0.2)),
+          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5)),
         ]),
       ),
     );
   }
 
   void _showAboutDialog(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white;
+    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF152238),
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hakkında', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('Hakkında', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             ClipRRect(borderRadius: BorderRadius.circular(12),
@@ -542,23 +590,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 errorBuilder: (_, __, ___) => const SizedBox(width: 48))),
           ]),
           const SizedBox(height: 16),
-          const Text('Samsun Ulaşım', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Samsun Ulaşım', style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text('Samsun Büyükşehir Belediyesi toplu taşıma uygulaması. Otobüs, tramvay, deniz, teleferik, Odak turistik hatlar ve SamAir havalimanı shuttle bilgilerini sunar.',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+            style: TextStyle(color: subTextColor, fontSize: 13)),
           const SizedBox(height: 12),
-          Text('Geliştirici: Turan KAYA', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontStyle: FontStyle.italic)),
-          Text('Versiyon: $_appVersion', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11)),
+          Text('Geliştirici: Turan KAYA', style: TextStyle(color: subTextColor, fontSize: 12, fontStyle: FontStyle.italic)),
+          Text('Versiyon: $_appVersion', style: TextStyle(color: subTextColor.withOpacity(0.6), fontSize: 11)),
           const SizedBox(height: 12),
-          // Partnerler
-          Text('İş Ortakları', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
+          Text('İş Ortakları', style: TextStyle(color: subTextColor, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),
           const SizedBox(height: 8),
           Row(children: [
             ClipRRect(borderRadius: BorderRadius.circular(8),
               child: Image.asset('assets/odak.png', width: 32, height: 32, fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => const SizedBox(width: 32))),
             const SizedBox(width: 8),
-            Text('Odak Samsun', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+            Text('Odak Samsun', style: TextStyle(color: subTextColor, fontSize: 12)),
           ]),
           const SizedBox(height: 6),
           Row(children: [
@@ -566,7 +613,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Image.asset('assets/samair.png', width: 32, height: 32, fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => const SizedBox(width: 32))),
             const SizedBox(width: 8),
-            Text('SamAir', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+            Text('SamAir', style: TextStyle(color: subTextColor, fontSize: 12)),
           ]),
         ]),
         actions: [
