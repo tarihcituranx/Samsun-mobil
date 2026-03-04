@@ -134,22 +134,22 @@ class ApiService {
     for (var item in data) {
       if (item is Map<String, dynamic>) {
         // Proxy format: {lat, lon, plate, speed, ...} | ASIS format: {enlem, boylam, plaka, hiz, ...}
-        final lat = double.tryParse((item['lat'] ?? item['enlem'] ?? item['Lat'] ?? item['Latitude'] ?? '0').toString()) ?? 0.0;
-        final lon = double.tryParse((item['lon'] ?? item['boylam'] ?? item['Lng'] ?? item['Longitude'] ?? '0').toString()) ?? 0.0;
+        final lat = double.tryParse((item['lat'] ?? item['enlem'] ?? item['Lat'] ?? item['Latitude'] ?? item['Enlem'] ?? '0').toString()) ?? 0.0;
+        final lon = double.tryParse((item['lon'] ?? item['boylam'] ?? item['Lng'] ?? item['Longitude'] ?? item['Boylam'] ?? '0').toString()) ?? 0.0;
         if (lat > 40 && lat < 43 && lon > 34 && lon < 38) {
           vehicles.add({
             'lat': lat,
             'lon': lon,
-            'plate': (item['plate'] ?? item['plaka'] ?? item['PlateNumber'] ?? '').toString(),
-            'speed': (item['speed'] ?? item['hiz'] ?? item['Speed'] ?? '0').toString(),
+            'plate': (item['plate'] ?? item['plaka'] ?? item['PlateNumber'] ?? item['Plaka'] ?? '').toString(),
+            'speed': (item['speed'] ?? item['hiz'] ?? item['Speed'] ?? item['Hizi'] ?? '0').toString(),
             'lineCode': _fixAndCleanText((item['lineCode'] ?? item['HatKodu'] ?? item['LineCode'] ?? lineCode).toString()),
-            'gunlukYolcu': (item['gunlukYolcu'] ?? '0').toString(),
-            'seferYolcu': (item['seferYolcu'] ?? '0').toString(),
-            'toplamHasilat': (item['toplamHasilat'] ?? '0').toString(),
-            'maxHiz': (item['maxHiz'] ?? '0').toString(),
-            'yon': (item['yon'] ?? item['Direction'] ?? '0').toString(),
-            'mesafe': (item['mesafe'] ?? '0').toString(),
-            'lastUpdate': (item['lastUpdate'] ?? item['editDate'] ?? item['tarih'] ?? item['LastLocationTime'] ?? '').toString(),
+            'gunlukYolcu': (item['gunlukYolcu'] ?? item['GunlukYolcuSayisi'] ?? item['DailyPassenger'] ?? item['GunlukYolcu'] ?? '0').toString(),
+            'seferYolcu': (item['seferYolcu'] ?? item['SeferYolcuSayisi'] ?? item['TripPassenger'] ?? item['SeferYolcu'] ?? '0').toString(),
+            'toplamHasilat': (item['toplamHasilat'] ?? item['ToplamHasilat'] ?? item['TotalRevenue'] ?? item['Hasilat'] ?? '0').toString(),
+            'maxHiz': (item['maxHiz'] ?? item['MaxHiz'] ?? item['MaxSpeed'] ?? item['MaksimumHiz'] ?? '0').toString(),
+            'yon': (item['yon'] ?? item['Yon'] ?? item['Direction'] ?? item['Yonu'] ?? '0').toString(),
+            'mesafe': (item['mesafe'] ?? item['Mesafe'] ?? item['TotalDistance'] ?? item['ToplamMesafe'] ?? '0').toString(),
+            'lastUpdate': (item['lastUpdate'] ?? item['editDate'] ?? item['tarih'] ?? item['LastLocationTime'] ?? item['SonKonumZamani'] ?? '').toString(),
             'yakin': item['yakin'],
           });
         }

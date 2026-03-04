@@ -33,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<LatLng> _routePolyline = [];
   List<Map<String, dynamic>> _routeResults = [];
   List<Map<String, dynamic>> _liveVehicles = [];
+  List<Map<String, dynamic>> _activeLineDuraklar = []; // RT-14: Seçili hattın durakları
 
   bool _isLoadingMap = true;
   bool _isLoadingNearby = false;
@@ -125,9 +126,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     _liveTimer?.cancel();
     _activeLineCode = lineCode;
+    // RT-15: Önceki durakları temizle, yeni hat durakları yükle
+    setState(() => _activeLineDuraklar = []);
+    _loadActiveLineDuraklar(lineCode);
     _toastInfo("📡 $lineCode hattı canlı takip başlatıldı");
     _fetchLiveVehicles();
     _liveTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchLiveVehicles());
+  }
+
+  /// RT-14: Seçili hattın tüm duraklarını haritaya yükle
+  Future<void> _loadActiveLineDuraklar(String lineCode) async {
+    try {
+      final duraklar = await DBService().getDurakGuzergahi(lineCode);
+      if (mounted) {
+        setState(() => _activeLineDuraklar = duraklar);
+        if (duraklar.isNotEmpty) {
+          _toastSuccess("📍 ${duraklar.length} durak haritada gösterildi");
+        }
+      }
+    } catch (e) {
+      debugPrint('Hat durak yükleme hatası: $e');
+    }
   }
 
   Future<void> _fetchLiveVehicles() async {
@@ -436,6 +455,16 @@ class _HomeScreenState extends State<HomeScreen> {
           PolylineLayer(polylines: [
             if (_routePolyline.isNotEmpty)
               Polyline(points: _routePolyline, strokeWidth: 5.0, color: const Color(0xFF2979FF)),
+            // RT-14: Seçili hattın güzergah polyline'ı
+            if (_activeLineDuraklar.isNotEmpty)
+              Polyline(
+                points: _activeLineDuraklar
+                    .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
+                    .map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()))
+                    .toList(),
+                strokeWidth: 4.0,
+                color: const Color(0xFF00BFA5),
+              ),
             Polyline(
               points: const [
                 LatLng(41.321695, 36.323563), // Batıpark (alt istasyon)
@@ -468,6 +497,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Center(child: Icon(Icons.flag, color: Colors.white, size: 18)),
               )),
+            // RT-14/RT-16: Seçili hattın durak marker'ları (tıklanınca durak adı gösterilsin)
+            ..._activeLineDuraklar
+                .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
+                .map((d) {
+              final sira = (d['sira'] as num?)?.toInt() ?? 0;
+              final ad = d['ad']?.toString() ?? 'Durak $sira';
+              return Marker(
+                point: LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()),
+                width: 24, height: 24,
+                child: GestureDetector(
+                  onTap: () {
+                    // RT-16: Durak bilgisi göster
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('📍 $sira. $ad', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: const Color(0xFF00695C),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00BFA5),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Center(child: Text('$sira', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold))),
+                  ),
+                ),
+              );
+            }),
             ..._liveVehicles.map((v) => Marker(
               point: LatLng(v['lat'] as double, v['lon'] as double),
               width: 38, height: 38,
