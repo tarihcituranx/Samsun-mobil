@@ -18,10 +18,11 @@ class YbsApiService {
   Future<Map<String, dynamic>?> getAdminConfig() async {
     if (_adminKey == null || _adminKey!.isEmpty) return null;
     try {
-      final uri = Uri.parse("$_renderBase/admin/config?key=$_adminKey");
+      final uri = Uri.parse("$_renderBase/admin/config");
       final response = await http.get(uri, headers: {
         'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
+        'X-Admin-Key': _adminKey!,
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -50,10 +51,11 @@ class YbsApiService {
       if (gtfsRtMaxLines != null) params['gtfs_rt_max_lines'] = gtfsRtMaxLines.toString();
       if (samairInterval != null) params['samair_interval'] = samairInterval.toString();
 
-      final uri = Uri.parse("$_renderBase/admin/config?key=$_adminKey");
+      final uri = Uri.parse("$_renderBase/admin/config");
       final response = await http.post(uri, headers: {
         'User-Agent': 'samsun_ulasim/2.0',
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Admin-Key': _adminKey!,
       }, body: params).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -70,10 +72,11 @@ class YbsApiService {
   Future<Map<String, dynamic>?> getAdminStats() async {
     if (_adminKey == null || _adminKey!.isEmpty) return null;
     try {
-      final uri = Uri.parse("$_renderBase/admin/stats?key=$_adminKey");
+      final uri = Uri.parse("$_renderBase/admin/stats");
       final response = await http.get(uri, headers: {
         'User-Agent': 'samsun_ulasim/2.0',
         'Accept': 'application/json',
+        'X-Admin-Key': _adminKey!,
       }).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
