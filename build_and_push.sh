@@ -15,15 +15,22 @@ success() { echo -e "${GREEN}✅ $1${NC}"; }
 warn()    { echo -e "${YELLOW}⚠ $1${NC}"; }
 error()   { echo -e "${RED}❌ $1${NC}"; exit 1; }
 
+# ── Sabitler ──────────────────────────────────────────────
+MAIN_REPO="https://github.com/tarihcituranx/Samsun-mobil.git"
+APK_REPO="https://github.com/tarihcituranx/test"
+APK_REPO_GIT="https://github.com/tarihcituranx/test.git"
+PROJECT_DIR="$HOME/Samsun-mobil"
+APK_REPO_DIR="$HOME/apk-dist"
+PUBSPEC="$PROJECT_DIR/pubspec.yaml"
+
 # ── Log sistemi ───────────────────────────────────────────
-LOG_DIR="$HOME/Samsun-mobil/logs"
+LOG_DIR="$PROJECT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
 BUILD_START=$(date +"%Y%m%d_%H%M%S")
-LOG_FILE=""       # build sonrası versiyon belli olunca set edilir
-STEP_LOG=""       # her adımın çıktısı buraya
+STEP_LOG="$LOG_DIR/build_${BUILD_START}.log"
+LOG_FILE=""  # versiyon belli olunca set edilir
 
-# Her adımı hem ekrana hem log'a yazar
 log() {
   local level="$1"; shift
   local msg="$*"
@@ -31,9 +38,149 @@ log() {
   local line="[$ts] [$level] $msg"
   echo "$line" >> "$STEP_LOG"
   case "$level" in
-    INFO)    info    "$msg" ;;
-    OK)      success "$msg" ;;
-    WARN)    warn    "$msg" ;;
+    INFO)  info    "$msg" ;;
+    OK)    success "$msg" ;;
+    WARN)  warn    "$msg" ;;
+    ERROR) echo -e "${RED}❌ $msg${NC}"; exit 1 ;;
+  esac
+}
+
+# ── Versiyon oku ──────────────────────────────────────────
+get_version() {
+  grep "^version:" "$PUBSPEC" | awk '{print $2}' | tr -d '\r'
+}
+
+# ── Versiyon otomatik artır (patch) ───────────────────────
+bump_version() {
+  local current
+  current=$(get_version)
+  local base build
+  base=$(echo "$current" | cut -d'+' -f1)
+  build=$(echo "$current" | cut -d'+' -f2)
+
+  IFS='.' read -r major minor patch <<< "$base"
+  patch=$((patch + 1))
+  build=$((build + 1))
+
+  local new_version="${major}.${minor}.${patch}+${build}"
+  sed -i "s/^version: .*/version: $new_version/" "$PUBSPEC"
+  echo "$new_version"
+}
+
+# ── Güncelleme JSON dosyası oluştur ───────────────────────
+# (Uygulama içi güncelleme denetimi bu dosyayı okur)
+generate_update_json() {
+  local version="$1"
+  local apk_url="$2"
+  local changelog="$3"
+  local base
+  base=$(echo "$version" | cut -d'+' -f1)
+
+  cat > "$APK_REPO_DIR/update.json" <<EOF
+{
+  "version": "$base",
+  "build_number": $(echo "$version" | cut -d'+' -f2),
+  "apk_url": "$apk_url",
+  "changelog": "$changelog",
+  "force_update": false,
+  "release_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+  log OK "update.json oluşturuldu → $base"
+}
+
+# ── Ana akış ──────────────────────────────────────────────
+main() {
+  echo -e "${CYAN}"
+  echo "╔══════════════════════════════════════╗"
+  echo "║     Samsun Mobil Build Sistemi       ║"
+  echo "╚══════════════════════════════════════╝"
+  echo -e "${NC}"
+
+  # 1) Repo klonla veya güncelle
+  if [ -d "$PROJECT_DIR/.git" ]; then
+    log INFO "Repo güncelleniyor..."
+    git -C "$PROJECT_DIR" pull origin main >> "$STEP_LOG" 2>&1
+    log OK "Repo güncellendi"
+  else
+    log INFO "Repo klonlanıyor..."
+    git clone "$MAIN_REPO" "$PROJECT_DIR" >> "$STEP_LOG" 2>&1
+    log OK "Repo klonlandı"
+  fi
+
+  # 2) Versiyonu artır
+  log INFO "Versiyon artırılıyor..."
+  NEW_VERSION=$(bump_version)
+  LOG_FILE="$LOG_DIR/build_v${NEW_VERSION}.log"
+  cp "$STEP_LOG" "$LOG_FILE" 2>/dev/null || true
+  log OK "Yeni versiyon: $NEW_VERSION"
+
+  # Changelog al
+  echo -e "${CYAN}Bu sürüm için değişiklikleri yaz (Enter ile bitir):${NC}"
+  read -r CHANGELOG
+  [ -z "$CHANGELOG" ] && CHANGELOG="Hata düzeltmeleri ve iyileştirmeler"
+
+  # 3) Flutter bağımlılıkları
+  log INFO "Flutter bağımlılıkları alınıyor..."
+  cd "$PROJECT_DIR"
+  flutter pub get >> "$LOG_FILE" 2>&1
+  log OK "Bağımlılıklar hazır"
+
+  # 4) APK derle
+  log INFO "APK derleniyor... (bu biraz sürebilir ☕)"
+  flutter build apk --release >> "$LOG_FILE" 2>&1
+  log OK "APK derlendi"
+
+  APK_SOURCE="$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk"
+  [ -f "$APK_SOURCE" ] || error "APK bulunamadı: $APK_SOURCE"
+
+  # 5) APK deposuna gönder
+  log INFO "APK deposu hazırlanıyor..."
+  if [ -d "$APK_REPO_DIR/.git" ]; then
+    git -C "$APK_REPO_DIR" pull origin main >> "$LOG_FILE" 2>&1
+  else
+    git clone "$APK_REPO_GIT" "$APK_REPO_DIR" >> "$LOG_FILE" 2>&1
+  fi
+
+  APK_NAME="samsun-mobil-v${NEW_VERSION}.apk"
+  cp "$APK_SOURCE" "$APK_REPO_DIR/$APK_NAME"
+
+  # Sabit isimli link (uygulama hep bu URL'den indirir)
+  cp "$APK_SOURCE" "$APK_REPO_DIR/latest.apk"
+
+  # 6) update.json oluştur
+  APK_URL="${APK_REPO}/raw/main/${APK_NAME}"
+  generate_update_json "$NEW_VERSION" "$APK_URL" "$CHANGELOG"
+
+  # 7) Ana repoya versiyon commit'i
+  log INFO "Ana repoya versiyon commit'i gönderiliyor..."
+  cd "$PROJECT_DIR"
+  git add pubspec.yaml
+  git commit -m "chore: v${NEW_VERSION} versiyon güncellendi" >> "$LOG_FILE" 2>&1
+  git push origin main >> "$LOG_FILE" 2>&1
+  log OK "Ana repo güncellendi"
+
+  # 8) APK deposunu push'la
+  log INFO "APK deposuna yükleniyor..."
+  cd "$APK_REPO_DIR"
+  git add .
+  git commit -m "release: Samsun Mobil v${NEW_VERSION}" >> "$LOG_FILE" 2>&1
+  git push origin main >> "$LOG_FILE" 2>&1
+  log OK "APK deposu güncellendi"
+
+  # ── Özet ───────────────────────────────────────────────
+  echo ""
+  echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
+  echo -e "${GREEN}║           BUILD BAŞARILI! 🎉                 ║${NC}"
+  echo -e "${GREEN}╠══════════════════════════════════════════════╣${NC}"
+  echo -e "${GREEN}║${NC} Versiyon : ${CYAN}$NEW_VERSION${NC}"
+  echo -e "${GREEN}║${NC} APK      : ${CYAN}$APK_NAME${NC}"
+  echo -e "${GREEN}║${NC} İndir    : ${CYAN}${APK_URL}${NC}"
+  echo -e "${GREEN}║${NC} Log      : ${CYAN}$LOG_FILE${NC}"
+  echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
+}
+
+main "$@"
     ERROR)   echo -e "${RED}❌ $msg${NC}" ;;
   esac
 }
@@ -376,4 +523,186 @@ ls -1t "$LOG_DIR"/*.log 2>/dev/null | head -5 | while read f; do
     echo -e "  ${GREEN}✅ $NAME ($SIZE)${NC}"
   fi
 done
-echo ""
+echo ""#!/bin/bash
+# ============================================================
+# Samsun Mobil - Akıllı APK Derle, Versiyonla ve Dağıt
+# Repo: https://github.com/tarihcituranx/Samsun-mobil.git
+# APK Deposu: https://github.com/tarihcituranx/test
+# ============================================================
+
+set -e
+
+# ── Renkli çıktı ──────────────────────────────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
+info()    { echo -e "${BLUE}ℹ $1${NC}"; }
+success() { echo -e "${GREEN}✅ $1${NC}"; }
+warn()    { echo -e "${YELLOW}⚠ $1${NC}"; }
+error()   { echo -e "${RED}❌ $1${NC}"; exit 1; }
+
+# ── Sabitler ──────────────────────────────────────────────
+MAIN_REPO="https://github.com/tarihcituranx/Samsun-mobil.git"
+APK_REPO="https://github.com/tarihcituranx/test"
+APK_REPO_GIT="https://github.com/tarihcituranx/test.git"
+PROJECT_DIR="$HOME/Samsun-mobil"
+APK_REPO_DIR="$HOME/apk-dist"
+PUBSPEC="$PROJECT_DIR/pubspec.yaml"
+
+# ── Log sistemi ───────────────────────────────────────────
+LOG_DIR="$PROJECT_DIR/logs"
+mkdir -p "$LOG_DIR"
+
+BUILD_START=$(date +"%Y%m%d_%H%M%S")
+STEP_LOG="$LOG_DIR/build_${BUILD_START}.log"
+LOG_FILE=""  # versiyon belli olunca set edilir
+
+log() {
+  local level="$1"; shift
+  local msg="$*"
+  local ts=$(date +"%Y-%m-%d %H:%M:%S")
+  local line="[$ts] [$level] $msg"
+  echo "$line" >> "$STEP_LOG"
+  case "$level" in
+    INFO)  info    "$msg" ;;
+    OK)    success "$msg" ;;
+    WARN)  warn    "$msg" ;;
+    ERROR) echo -e "${RED}❌ $msg${NC}"; exit 1 ;;
+  esac
+}
+
+# ── Versiyon oku ──────────────────────────────────────────
+get_version() {
+  grep "^version:" "$PUBSPEC" | awk '{print $2}' | tr -d '\r'
+}
+
+# ── Versiyon otomatik artır (patch) ───────────────────────
+bump_version() {
+  local current
+  current=$(get_version)
+  local base build
+  base=$(echo "$current" | cut -d'+' -f1)
+  build=$(echo "$current" | cut -d'+' -f2)
+
+  IFS='.' read -r major minor patch <<< "$base"
+  patch=$((patch + 1))
+  build=$((build + 1))
+
+  local new_version="${major}.${minor}.${patch}+${build}"
+  sed -i "s/^version: .*/version: $new_version/" "$PUBSPEC"
+  echo "$new_version"
+}
+
+# ── Güncelleme JSON dosyası oluştur ───────────────────────
+# (Uygulama içi güncelleme denetimi bu dosyayı okur)
+generate_update_json() {
+  local version="$1"
+  local apk_url="$2"
+  local changelog="$3"
+  local base
+  base=$(echo "$version" | cut -d'+' -f1)
+
+  cat > "$APK_REPO_DIR/update.json" <<EOF
+{
+  "version": "$base",
+  "build_number": $(echo "$version" | cut -d'+' -f2),
+  "apk_url": "$apk_url",
+  "changelog": "$changelog",
+  "force_update": false,
+  "release_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+  log OK "update.json oluşturuldu → $base"
+}
+
+# ── Ana akış ──────────────────────────────────────────────
+main() {
+  echo -e "${CYAN}"
+  echo "╔══════════════════════════════════════╗"
+  echo "║     Samsun Mobil Build Sistemi       ║"
+  echo "╚══════════════════════════════════════╝"
+  echo -e "${NC}"
+
+  # 1) Repo klonla veya güncelle
+  if [ -d "$PROJECT_DIR/.git" ]; then
+    log INFO "Repo güncelleniyor..."
+    git -C "$PROJECT_DIR" pull origin main >> "$STEP_LOG" 2>&1
+    log OK "Repo güncellendi"
+  else
+    log INFO "Repo klonlanıyor..."
+    git clone "$MAIN_REPO" "$PROJECT_DIR" >> "$STEP_LOG" 2>&1
+    log OK "Repo klonlandı"
+  fi
+
+  # 2) Versiyonu artır
+  log INFO "Versiyon artırılıyor..."
+  NEW_VERSION=$(bump_version)
+  LOG_FILE="$LOG_DIR/build_v${NEW_VERSION}.log"
+  cp "$STEP_LOG" "$LOG_FILE" 2>/dev/null || true
+  log OK "Yeni versiyon: $NEW_VERSION"
+
+  # Changelog al
+  echo -e "${CYAN}Bu sürüm için değişiklikleri yaz (Enter ile bitir):${NC}"
+  read -r CHANGELOG
+  [ -z "$CHANGELOG" ] && CHANGELOG="Hata düzeltmeleri ve iyileştirmeler"
+
+  # 3) Flutter bağımlılıkları
+  log INFO "Flutter bağımlılıkları alınıyor..."
+  cd "$PROJECT_DIR"
+  flutter pub get >> "$LOG_FILE" 2>&1
+  log OK "Bağımlılıklar hazır"
+
+  # 4) APK derle
+  log INFO "APK derleniyor... (bu biraz sürebilir ☕)"
+  flutter build apk --release >> "$LOG_FILE" 2>&1
+  log OK "APK derlendi"
+
+  APK_SOURCE="$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk"
+  [ -f "$APK_SOURCE" ] || error "APK bulunamadı: $APK_SOURCE"
+
+  # 5) APK deposuna gönder
+  log INFO "APK deposu hazırlanıyor..."
+  if [ -d "$APK_REPO_DIR/.git" ]; then
+    git -C "$APK_REPO_DIR" pull origin main >> "$LOG_FILE" 2>&1
+  else
+    git clone "$APK_REPO_GIT" "$APK_REPO_DIR" >> "$LOG_FILE" 2>&1
+  fi
+
+  APK_NAME="samsun-mobil-v${NEW_VERSION}.apk"
+  cp "$APK_SOURCE" "$APK_REPO_DIR/$APK_NAME"
+
+  # Sabit isimli link (uygulama hep bu URL'den indirir)
+  cp "$APK_SOURCE" "$APK_REPO_DIR/latest.apk"
+
+  # 6) update.json oluştur
+  APK_URL="${APK_REPO}/raw/main/${APK_NAME}"
+  generate_update_json "$NEW_VERSION" "$APK_URL" "$CHANGELOG"
+
+  # 7) Ana repoya versiyon commit'i
+  log INFO "Ana repoya versiyon commit'i gönderiliyor..."
+  cd "$PROJECT_DIR"
+  git add pubspec.yaml
+  git commit -m "chore: v${NEW_VERSION} versiyon güncellendi" >> "$LOG_FILE" 2>&1
+  git push origin main >> "$LOG_FILE" 2>&1
+  log OK "Ana repo güncellendi"
+
+  # 8) APK deposunu push'la
+  log INFO "APK deposuna yükleniyor..."
+  cd "$APK_REPO_DIR"
+  git add .
+  git commit -m "release: Samsun Mobil v${NEW_VERSION}" >> "$LOG_FILE" 2>&1
+  git push origin main >> "$LOG_FILE" 2>&1
+  log OK "APK deposu güncellendi"
+
+  # ── Özet ───────────────────────────────────────────────
+  echo ""
+  echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
+  echo -e "${GREEN}║           BUILD BAŞARILI! 🎉                 ║${NC}"
+  echo -e "${GREEN}╠══════════════════════════════════════════════╣${NC}"
+  echo -e "${GREEN}║${NC} Versiyon : ${CYAN}$NEW_VERSION${NC}"
+  echo -e "${GREEN}║${NC} APK      : ${CYAN}$APK_NAME${NC}"
+  echo -e "${GREEN}║${NC} İndir    : ${CYAN}${APK_URL}${NC}"
+  echo -e "${GREEN}║${NC} Log      : ${CYAN}$LOG_FILE${NC}"
+  echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
+}
+
+main "$@"
