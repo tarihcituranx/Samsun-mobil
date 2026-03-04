@@ -551,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 14)),
                           ),
-                          Text(d['ad'] ?? '', style: TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 3, color: Colors.white, offset: const Offset(0, 0)), Shadow(blurRadius: 6, color: Colors.white, offset: const Offset(0, 0))]), overflow: TextOverflow.ellipsis, maxLines: 1),
+                          Text(d['ad'] ?? '', style: const TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 3, color: Colors.white, offset: Offset(0, 0)), Shadow(blurRadius: 6, color: Colors.white, offset: Offset(0, 0))]), overflow: TextOverflow.ellipsis, maxLines: 1),
                         ],
                       ),
                     ),

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:samsun_mobil_app/services/update_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -17,11 +19,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _defaultTransport = 'Otobüs';
   List<String> _favoriHatlar = [];
   List<String> _favoriDuraklar = [];
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _loadPreferences();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = 'v${info.version}+${info.buildNumber}';
+    });
   }
 
   Future<void> _loadPreferences() async {
@@ -96,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Veri Yönetimi
           _sectionHeader('Veri Yönetimi'),
           _card([
-            _chevronItem(Icons.system_update, Colors.blue, 'Güncelleme Kontrolü', onTap: _checkForUpdate),
+            _chevronItem(Icons.system_update, Colors.blue, 'Güncelleme Kontrolü', onTap: () => UpdateChecker.check(context, forceCheck: true)),
             _divider(),
             _chevronItem(Icons.refresh, Colors.teal, 'Verileri Yenile', onTap: () => _showDataRefreshDialog(context)),
             _divider(),
@@ -131,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Versiyon
           Center(
-            child: Text('Samsun Ulaşım Sistemi v2.5.0', style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 13)),
+            child: Text('Samsun Ulaşım Sistemi $_appVersion', style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 13)),
           ),
           const SizedBox(height: 4),
           Center(
@@ -141,81 +152,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
-  }
-
-  // ─── GÜNCELLEME KONTROLÜ ───
-  Future<void> _checkForUpdate() async {
-    try {
-      // Render proxy üzerinden sürüm kontrolü (repo gizli, GitHub API'ye doğrudan erişilemez)
-      final response = await http.get(
-        Uri.parse('https://samsun-gtfs-rt.onrender.com/api/app_version'),
-        headers: {'User-Agent': 'SamsunMobilApp/2.0', 'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final latestVersion = (data['latest_version'] ?? '').toString();
-        const currentVersion = '2.5.0';
-        final latestParts = latestVersion.split('.').map((s) => int.tryParse(s) ?? 0).toList();
-        final curParts = currentVersion.split('.').map((s) => int.tryParse(s) ?? 0).toList();
-        bool isNewer = false;
-        for (int i = 0; i < curParts.length; i++) {
-          final t = i < latestParts.length ? latestParts[i] : 0;
-          if (t > curParts[i]) { isNewer = true; break; }
-          if (t < curParts[i]) break;
-        }
-        final releaseNotes = data['release_notes'] ?? '';
-        final downloadUrl = data['download_url'] ?? '';
-        final forceUpdate = data['force_update'] == true;
-        if (isNewer && mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: !forceUpdate,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: const Color(0xFF152238),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('🆕 Yeni Sürüm: v$latestVersion', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              content: SingleChildScrollView(
-                child: Text(releaseNotes, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
-              ),
-              actions: [
-                if (!forceUpdate)
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Sonra', style: TextStyle(color: Colors.white.withOpacity(0.5)))),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    if (downloadUrl.isNotEmpty && await canLaunchUrl(Uri.parse(downloadUrl))) {
-                      await launchUrl(Uri.parse(downloadUrl), mode: LaunchMode.externalApplication);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2979FF)),
-                  child: const Text('Güncelle'),
-                ),
-              ],
-            ),
-          );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('✅ Güncel sürümdesiniz', style: TextStyle(color: Colors.white)),
-              backgroundColor: const Color(0xFF00BFA5),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Güncelleme kontrolü başarısız: $e', style: const TextStyle(color: Colors.white)),
-            backgroundColor: const Color(0xFFFF5252),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
-    }
   }
 
   // ─── DİL SEÇİMİ ───
@@ -590,8 +526,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
           const SizedBox(height: 12),
           Text('Geliştirici: Turan KAYA', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontStyle: FontStyle.italic)),
-          const SizedBox(height: 4),
-          Text('Versiyon: 2.5.0', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11)),
+          Text('Versiyon: $_appVersion', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11)),
           const SizedBox(height: 12),
           // Partnerler
           Text('İş Ortakları', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1)),

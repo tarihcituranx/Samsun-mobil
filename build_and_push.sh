@@ -75,6 +75,26 @@ info "pubspec.yaml güncelleniyor..."
 sed -i "s/^version: .*/version: ${VERSION_NAME}+${NEW_CODE}/" "$PUBSPEC"
 success "pubspec.yaml → version: ${VERSION_NAME}+${NEW_CODE}"
 
+# ── 3.1 Sürüm notlarını otomatik oluştur ──────────────────
+info "Sürüm notları oluşturuluyor..."
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+if [ -z "$LATEST_TAG" ]; then
+  info "İlk sürüm, tüm commit geçmişi alınıyor."
+  RELEASE_NOTES=$(git log --pretty=format:"- %s")
+else
+  info "Değişiklikler ${LATEST_TAG}'den bu yana alınıyor."
+  RELEASE_NOTES=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s")
+fi
+
+if [ -z "$RELEASE_NOTES" ]; then
+  RELEASE_NOTES="- Çeşitli iyileştirmeler ve hata düzeltmeleri yapıldı."
+fi
+
+info "Sürüm Notları:"
+echo -e "${CYAN}$RELEASE_NOTES${NC}"
+
+
 # ── 4. Flutter build ──────────────────────────────────────
 info "Flutter bağımlılıkları yükleniyor..."
 FLUTTER_DIR=$(dirname "$PUBSPEC")
@@ -130,7 +150,6 @@ fi
 info "version.json güncelleniyor..."
 
 APK_DOWNLOAD_URL="https://github.com/tarihcituranx/test/raw/main/releases/latest/app-release.apk"
-RELEASE_NOTES="Sürüm ${VERSION_NAME} (Build ${NEW_CODE}) - $(date '+%d.%m.%Y %H:%M')"
 
 cat > releases/version.json << JSON
 {
@@ -161,6 +180,11 @@ cd "$MAIN_REPO"
 git add .
 git commit -m "build: ${BUILD_TAG} - APK yayınlandı ve proje güncellendi"
 git push origin main
+
+info "Yeni sürüm etiketleniyor: ${BUILD_TAG}"
+git tag -a "${BUILD_TAG}" -m "Sürüm ${BUILD_TAG}"
+git push origin --tags
+
 success "Ana repo güncellendi"
 
 # ── Özet ─────────────────────────────────────────────────
