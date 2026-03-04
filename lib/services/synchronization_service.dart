@@ -541,6 +541,9 @@ class SynchronizationService {
       conflictAlgorithm: ConflictAlgorithm.replace
     );
 
+    // Sync sonrası DBService önbelleğini temizle (güncel veri okunabilsin)
+    dbHelper.invalidateCache();
+
     print('🎉 **Senkronizasyon Başarıyla Tamamlandı** 🎉');
   }
 

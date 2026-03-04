@@ -9,6 +9,7 @@ class DatabaseHelper {
 
   static const _databaseName = "SamsunTransit.db";
   static const _databaseVersion = 1;
+  static int get databaseVersion => _databaseVersion;
 
   // Tablo ve Sütun Adları (samsun.py'den alınmıştır)
   static const tableHat = 'hat';
@@ -42,21 +43,32 @@ class DatabaseHelper {
     String path = join(documentsDirectory.path, _databaseName);
     return await openDatabase(path,
         version: _databaseVersion,
-        onCreate: _onCreate);
+        onCreate: (db, version) => createTables(db));
   }
 
-  // Veritabanı ilk kez oluşturulduğunda tabloları yaratan SQL komutları.
-  // Bu şema, samsun.py'nin _create_tables fonksiyonundan esinlenmiştir.
-  Future _onCreate(Database db, int version) async {
+  /// Veritabanını silip yeniden oluştur (test ve tam sıfırlama için).
+  Future<void> deleteDatabase() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, _databaseName);
+    await databaseFactory.deleteDatabase(path);
+  }
+
+  /// Veritabanı tabloları oluşturan statik metot.
+  /// Hem DatabaseHelper hem DBService tarafından kullanılır.
+  static Future<void> createTables(Database db) async {
     await db.execute('''
-      CREATE TABLE $tableMeta(
+      CREATE TABLE IF NOT EXISTS $tableMeta(
         key TEXT PRIMARY KEY, 
         value TEXT
       )
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableHat (
+      CREATE TABLE IF NOT EXISTS $tableHat (
         code TEXT PRIMARY KEY, 
         name TEXT, 
         tip TEXT, 
@@ -67,7 +79,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableDurak (
+      CREATE TABLE IF NOT EXISTS $tableDurak (
         id TEXT PRIMARY KEY, 
         kod TEXT, 
         ad TEXT, 
@@ -77,7 +89,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableHatDurak (
+      CREATE TABLE IF NOT EXISTS $tableHatDurak (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         hat TEXT, 
         durak_id TEXT, 
@@ -91,7 +103,7 @@ class DatabaseHelper {
       ''');
     
     await db.execute('''
-      CREATE TABLE $tableSefer (
+      CREATE TABLE IF NOT EXISTS $tableSefer (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         hat TEXT, 
         saat TEXT, 
@@ -102,7 +114,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableFiyat (
+      CREATE TABLE IF NOT EXISTS $tableFiyat (
         id INTEGER PRIMARY KEY,
         kaynak TEXT, 
         hat_adi TEXT, 
@@ -114,7 +126,7 @@ class DatabaseHelper {
       ''');
     
     await db.execute('''
-      CREATE TABLE $tableOdak (
+      CREATE TABLE IF NOT EXISTS $tableOdak (
         id TEXT PRIMARY KEY, 
         ad TEXT, 
         kod TEXT, 
@@ -123,7 +135,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableOdakDurak (
+      CREATE TABLE IF NOT EXISTS $tableOdakDurak (
         id INTEGER PRIMARY KEY, 
         hat TEXT, 
         ad TEXT, 
@@ -137,7 +149,7 @@ class DatabaseHelper {
       ''');
       
     await db.execute('''
-      CREATE TABLE $tableSamair (
+      CREATE TABLE IF NOT EXISTS $tableSamair (
         id INTEGER PRIMARY KEY, 
         ad TEXT, 
         kod TEXT
@@ -145,7 +157,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableSamairDurak (
+      CREATE TABLE IF NOT EXISTS $tableSamairDurak (
         id INTEGER PRIMARY KEY, 
         hat INTEGER, 
         ad TEXT, 
@@ -158,7 +170,7 @@ class DatabaseHelper {
       ''');
 
     await db.execute('''
-      CREATE TABLE $tableSamairSefer (
+      CREATE TABLE IF NOT EXISTS $tableSamairSefer (
         id INTEGER PRIMARY KEY, 
         hat INTEGER, 
         saat TEXT, 
@@ -171,8 +183,8 @@ class DatabaseHelper {
       ''');
       
     // İndeksler (samsun.py'deki gibi)
-    await db.execute("CREATE INDEX idx_hd ON $tableHatDurak(hat)");
-    await db.execute("CREATE INDEX idx_sf ON $tableSefer(hat)");
-    await db.execute("CREATE INDEX idx_dk_latlon ON $tableDurak(lat, lon)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_hd ON $tableHatDurak(hat)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sf ON $tableSefer(hat)");
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_dk_latlon ON $tableDurak(lat, lon)");
   }
 }

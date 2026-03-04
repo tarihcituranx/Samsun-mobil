@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import '../helpers/database_helper.dart';
 
 class DBService {
   static final DBService _instance = DBService._internal();
@@ -11,7 +12,7 @@ class DBService {
 
   Database? _db;
 
-  // In-memory cache (DB sadece read-only, veri değişmez)
+  // In-memory cache
   List<Map<String, dynamic>>? _hatlarCache;
   List<Map<String, dynamic>>? _durakCache;
   List<Map<String, dynamic>>? _odakCache;
@@ -22,9 +23,18 @@ class DBService {
     return _db!;
   }
 
+  /// Sync sonrası önbelleği temizle, böylece güncel veri okunur.
+  /// Not: _db = null yaparak sonraki erişimde _initDB() ile yeniden bağlanmasını sağlar.
+  void invalidateCache() {
+    _hatlarCache = null;
+    _durakCache = null;
+    _odakCache = null;
+    _db = null;
+  }
+
   Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'samsun_ulasim.db');
+    final path = join(dbPath, 'samsun_mobil.db');
 
     // Cihazda DB yoksa assets'ten kopyala
     final exists = await databaseExists(path);
@@ -34,15 +44,21 @@ class DBService {
         await Directory(dirname(path)).create(recursive: true);
       } catch (_) {}
 
-      // Asset'ten byte olarak oku
-      final data = await rootBundle.load('assets/samsun_ulasim.db');
-      final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-
-      // Cihazın hafızasına yaz
-      await File(path).writeAsBytes(bytes, flush: true);
+      // Asset'ten byte olarak okumayı dene
+      try {
+        final data = await rootBundle.load('assets/samsun_mobil.db');
+        final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+        await File(path).writeAsBytes(bytes, flush: true);
+      } catch (_) {
+        // Asset yoksa boş DB oluşturulacak (sync ile doldurulur)
+      }
     }
 
-    return await openDatabase(path, readOnly: true); // Sadece okuma
+    return await openDatabase(
+      path,
+      version: DatabaseHelper.databaseVersion,
+      onCreate: (db, version) => DatabaseHelper.createTables(db),
+    );
   }
 
   Future<List<Map<String, dynamic>>> getHatlar() async {
@@ -180,17 +196,18 @@ class DBService {
       if (id.isEmpty) continue;
 
       if (_calculateDistance(startLat, startLon, lat, lon) <= radiusParams) {
-        startStops.add("'$id'");
+        startStops.add(id);
       }
       if (_calculateDistance(destLat, destLon, lat, lon) <= radiusParams) {
-        endStops.add("'$id'");
+        endStops.add(id);
       }
     }
 
     if (startStops.isEmpty || endStops.isEmpty) return [];
 
-    final startSet = startStops.join(',');
-    final endSet = endStops.join(',');
+    // Parameterized query ile SQL injection koruması
+    final startPlaceholders = List.filled(startStops.length, '?').join(',');
+    final endPlaceholders = List.filled(endStops.length, '?').join(',');
 
     // 2. Direct Routes - Schema'ya uygun (hat_durak kolonları: hat, durak_id, ad, sira, lat, lon)
     final directQuery = """
@@ -200,15 +217,15 @@ class DBService {
              (h2.sira - h1.sira) as stop_diff
       FROM hat_durak h1
       JOIN hat_durak h2 ON h1.hat = h2.hat
-      WHERE h1.durak_id IN ($startSet)
-        AND h2.durak_id IN ($endSet)
+      WHERE h1.durak_id IN ($startPlaceholders)
+        AND h2.durak_id IN ($endPlaceholders)
         AND h1.sira < h2.sira
       ORDER BY stop_diff ASC
       LIMIT 5
     """;
 
     try {
-      final directResults = await db.rawQuery(directQuery);
+      final directResults = await db.rawQuery(directQuery, [...startStops, ...endStops]);
       for (var r in directResults) {
         final pMin = (r['s_sira'] as num?)?.toInt() ?? 0;
         final pMax = (r['e_sira'] as num?)?.toInt() ?? 0;
@@ -250,15 +267,15 @@ class DBService {
         JOIN hat_durak h2 ON h1.hat = h2.hat
         JOIN hat_durak h3 ON h2.durak_id = h3.durak_id AND h1.hat != h3.hat
         JOIN hat_durak h4 ON h3.hat = h4.hat
-        WHERE h1.durak_id IN ($startSet)
-          AND h4.durak_id IN ($endSet)
+        WHERE h1.durak_id IN ($startPlaceholders)
+          AND h4.durak_id IN ($endPlaceholders)
           AND h1.sira < h2.sira
           AND h3.sira < h4.sira
         LIMIT 3
       """;
 
       try {
-        final transferResults = await db.rawQuery(transferQuery);
+        final transferResults = await db.rawQuery(transferQuery, [...startStops, ...endStops]);
         for (var r in transferResults) {
           final s1 = (r['s_sira'] as num?)?.toInt() ?? 0;
           final t1 = (r['t_sira'] as num?)?.toInt() ?? 0;

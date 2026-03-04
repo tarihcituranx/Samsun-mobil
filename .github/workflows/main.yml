@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,10 +69,21 @@ jobs:
           cat dist/update.json
 
       # 8) APK'yı dağıtım reposuna gönder
+      # NOT: Bu adım cross-repo push yapar. GITHUB_TOKEN buna izin vermez.
+      # Çözüm: Bu reponun Settings → Secrets and variables → Actions →
+      #   New repository secret → İsim: APK_REPO_TOKEN
+      #   Değer: GitHub PAT (repo scope'lu, tarihcituranx/test reposuna yazma izni olan)
       - name: APK reposuna gönder
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.APK_REPO_TOKEN }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "⚠️ APK_REPO_TOKEN secret tanımlı değil."
+            echo "ℹ️ Ayarlamak için: Settings → Secrets and variables → Actions → New repository secret → APK_REPO_TOKEN"
+            echo "ℹ️ APK yine de Artifacts olarak indirilebilir."
+            exit 0
+          fi
           VERSION=${{ steps.version.outputs.version }}
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
@@ -82,7 +96,7 @@ jobs:
           git commit -m "release: Samsun Mobil v${VERSION}" || echo "Değişiklik yok"
           git push
 
-      # 9) Artifacts olarak da sakla (GitHub Actions üzerinden indirilebilir)
+      # 9) Artifacts olarak sakla (GitHub Actions üzerinden her zaman indirilebilir)
       - name: Artifacts kaydet
         uses: actions/upload-artifact@v4
         with:

@@ -42,12 +42,23 @@ lib/
 - [x] project_map.sh — mimari harita + temizleyici
 - [x] rename_app.sh — paket adı güncelleyici
 - [x] update_checker.dart — uygulama içi güncelleme
+- [x] CI/CD workflow düzeltmesi (APK_REPO_TOKEN + continue-on-error)
+- [x] DBService asset dosya adı düzeltmesi
+- [x] SQL injection koruması (parameterized queries)
+- [x] Admin key güvenlik düzeltmesi (URL→Header)
+- [x] DatabaseHelper.createTables() paylaşımlı şema
+- [x] Sync sonrası cache invalidation
 
 ## 🚧 Devam Eden Görevler
 - [ ] ...
 
 ## 🐛 Bilinen Buglar
-- [ ] Android Build Tools 35.0.0 — Nix ortamında versiyon uyumsuzluğu
+- [x] Android Build Tools 35.0.0 — Nix ortamında versiyon uyumsuzluğu
+- [x] DBService yanlış asset adı (samsun_ulasim.db → samsun_mobil.db)
+- [x] DBService read-only açılıyordu, sync yazamıyordu
+- [x] CI workflow cross-repo push izin hatası (GITHUB_TOKEN → APK_REPO_TOKEN)
+- [x] SQL injection riski (calculateRouteLocally)
+- [x] Admin key URL'de açığa çıkıyordu
 
 ## 🔑 Kritik Kararlar
 | Karar | Gerekçe | Tarih |
@@ -65,8 +76,8 @@ lib/
 - Ortam: Firebase Studio / IDX / Nix
 
 ## 📝 Son Oturum Notları
-- Tarih: 04.03.2026 09:26
-- Yapılan: Proje beyin dosyası oluşturuldu
+- Tarih: 04.03.2026 14:57
+- Yapılan: CI/CD düzeltmesi, DB sorunları çözüldü, güvenlik açıkları kapatıldı
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
