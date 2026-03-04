@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 04.03.2026 21:01
+> **Son güncelleme:** 04.03.2026 22:09
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+11
+- **Sürüm:** 1.0.0+12
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -79,7 +79,7 @@ lib/
 - version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 04.03.2026 21:01
+- Tarih: 04.03.2026 22:09
 - Son commit: docs: Proje mimari haritası güncellendi — v1.0.0
 - Bırakılan: —
 
@@ -92,9 +92,9 @@ lib/
 
 ## 📜 Git Geçmişi (Son 5)
 ```
-c7e62fb docs: Proje mimari haritası güncellendi — v1.0.0
-14c5edd build: v1.0.0+11 - APK yayınlandı
-6a7dabd Update build.sh
-c1f5c9b Update build.sh
-1701d14 Create fix_deps.py
+fe9e025 docs: Proje mimari haritası güncellendi — v1.0.0
+356788f build: v1.0.0+12 - APK yayınlandı
+c0ca853 Fix conditional check for CI environment variable
+7446d2b Update build.sh
+6ad1f5d Update build.sh
 ```
