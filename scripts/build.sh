@@ -113,7 +113,7 @@ check_disk() {
   local free_mb=$(df -k $HOME | awk 'NR==2 {print int($4/1024)}')
   local used_pct=$(df $HOME | awk 'NR==2 {print int($5)}')
   log INFO "Disk: ${free_mb}MB boş (%${used_pct} dolu)"
-  [ "$free_mb" -lt "$min_mb" ] && { log WARN "Yetersiz disk — temizlik"; cleanup_disk "low_disk"; }
+  [ "$free_mb" -lt "$min_mb" ] && { log WARN "Yetersiz disk — temizlik"; cleanup_disk "low_disk"; } || true
 }
 
 setup_git_auth() {
