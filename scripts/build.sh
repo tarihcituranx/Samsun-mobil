@@ -23,7 +23,7 @@ APK_REPO_URL_HTTPS="https://github.com/tarihcituranx/test"
 APK_REPO_GIT="https://github.com/tarihcituranx/test.git"
 MAX_APK_KEEP=3
 
-if [ "$IS_CI" = "true" ]; then
+if [ "$CI" = "true" ] && [ -n "$APK_REPO_TOKEN" ]; then
   PROJECT_DIR="$GITHUB_WORKSPACE"
   APK_REPO_DIR="$RUNNER_TEMP/apk-dist"
 else
