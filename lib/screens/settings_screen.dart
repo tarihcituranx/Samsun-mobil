@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../services/background_service.dart';
+import '../services/synchronization_service.dart';
 import '../widgets/settings_section_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -372,16 +373,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('✅ Veriler yenileniyor...', style: TextStyle(color: Colors.white)),
+                  content: const Text('🔄 Veriler yenileniyor...', style: TextStyle(color: Colors.white)),
                   backgroundColor: const Color(0xFF00BFA5),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  duration: const Duration(seconds: 2),
                 ),
               );
+              try {
+                await SynchronizationService().runFullSynchronization(force: true);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('✅ Veriler başarıyla güncellendi!', style: TextStyle(color: Colors.white)),
+                      backgroundColor: const Color(0xFF00BFA5),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('❌ Güncelleme hatası: $e', style: const TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00BFA5)),
             child: const Text('Yenile'),
@@ -459,12 +485,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _termsSection(String title, String body) {
+    final hasPhone = body.contains('0362') || body.contains('153');
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
         const SizedBox(height: 4),
-        Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
+        if (hasPhone)
+          GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse('tel:03624311012');
+              if (await canLaunchUrl(uri)) await launchUrl(uri);
+            },
+            child: Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, decoration: TextDecoration.underline)),
+          )
+        else
+          Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
       ]),
     );
   }
