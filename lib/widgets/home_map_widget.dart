@@ -224,6 +224,8 @@ class HomeMapWidget extends StatelessWidget {
             // Duraklar (en yakın 300 veya sadece yakın)
             ...() {
               var sorted = List<Map<String, dynamic>>.from(duraklar);
+              // Teleferik duraklarını filtrele — zaten ayrı marker olarak gösteriliyor
+              sorted.removeWhere((d) => (d['kod']?.toString() ?? '').startsWith('T') && (d['ad']?.toString() ?? '').contains('Teleferik'));
               sorted.sort((a, b) {
                 double da = haversine(myLocation.latitude, myLocation.longitude, (a['lat'] as num).toDouble(), (a['lon'] as num).toDouble());
                 double db = haversine(myLocation.latitude, myLocation.longitude, (b['lat'] as num).toDouble(), (b['lon'] as num).toDouble());
