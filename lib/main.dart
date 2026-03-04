@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samsun_ulasim/services/synchronization_service.dart';
+import 'package:samsun_ulasim/services/background_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -135,6 +136,8 @@ class _SplashLoaderState extends State<_SplashLoader> with SingleTickerProviderS
     SynchronizationService().runFullSynchronization().catchError((e) {
       debugPrint('Sync error: $e');
     });
+    // BG: Arka plan servisini başlat (batarya dostu)
+    BackgroundService().start();
   }
 
   @override

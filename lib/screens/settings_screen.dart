@@ -4,6 +4,7 @@ import 'package:samsun_ulasim/services/update_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
+import '../services/background_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -19,6 +20,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<String> _favoriHatlar = [];
   List<String> _favoriDuraklar = [];
   String _appVersion = '';
+  bool _bgUpdateEnabled = true;
+  bool _bgNotificationsEnabled = true;
 
   @override
   void initState() {
@@ -29,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadAppVersion() async {
     final PackageInfo info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
     setState(() {
       _appVersion = 'v${info.version}+${info.buildNumber}';
     });
@@ -36,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _showNearbyOnly = prefs.getBool('show_nearby_only') ?? false;
@@ -43,6 +48,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _defaultTransport = prefs.getString('default_transport') ?? 'Otobüs';
       _favoriHatlar = prefs.getStringList('favori_hatlar') ?? [];
       _favoriDuraklar = prefs.getStringList('favori_duraklar') ?? [];
+      _bgUpdateEnabled = prefs.getBool('bg_update_enabled') ?? true;
+      _bgNotificationsEnabled = prefs.getBool('bg_notifications_enabled') ?? true;
     });
   }
 
@@ -85,6 +92,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _infoItem(Icons.dark_mode, Colors.purple, 'Tema', 'Karanlık Mod'),
             _divider(),
             _chevronItem(Icons.language, Colors.orange, 'Dil Seçimi', subtitle: _selectedLanguage, onTap: () => _showLanguageDialog(context)),
+          ]),
+          const SizedBox(height: 20),
+
+          // Arka Plan Servisi
+          _sectionHeader('Arka Plan Servisi'),
+          _card([
+            _switchItem(Icons.sync, Colors.teal, 'Arka Plan Güncelleme', _bgUpdateEnabled, (v) {
+              setState(() => _bgUpdateEnabled = v);
+              BackgroundService().setBackgroundUpdateEnabled(v);
+            }),
+            _divider(),
+            _switchItem(Icons.notifications_active, Colors.orange, 'Arka Plan Bildirimleri', _bgNotificationsEnabled, (v) {
+              setState(() => _bgNotificationsEnabled = v);
+              BackgroundService().setNotificationsEnabled(v);
+            }),
           ]),
           const SizedBox(height: 20),
 
