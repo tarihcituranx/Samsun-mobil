@@ -12,7 +12,25 @@ info()    { echo -e "${CYAN}▶ $1${NC}"; }
 success() { echo -e "${GREEN}✅ $1${NC}"; }
 warn()    { echo -e "${YELLOW}⚠  $1${NC}"; }
 
-PROJECT_DIR="${1:-$HOME/Samsun-mobil}"
+# ── CI/Yerel ortam tespiti ────────────────────────────────
+IS_CI="${CI:-false}"
+
+# Proje dizini: argüman > CI workspace > yerel varsayılan
+if [ -n "$1" ] && [ -d "$1" ]; then
+  PROJECT_DIR="$1"
+elif [ "$IS_CI" = "true" ] && [ -n "$GITHUB_WORKSPACE" ]; then
+  PROJECT_DIR="$GITHUB_WORKSPACE"
+else
+  PROJECT_DIR="$HOME/Samsun-mobil"
+fi
+
+# APK deposu: CI'da RUNNER_TEMP, yerelde HOME
+if [ "$IS_CI" = "true" ] && [ -n "$RUNNER_TEMP" ]; then
+  APK_REPO_DIR="$RUNNER_TEMP/apk-dist"
+else
+  APK_REPO_DIR="$HOME/apk-dist"
+fi
+
 PUBSPEC=$(find "$PROJECT_DIR" -name "pubspec.yaml" | head -1)
 [ -z "$PUBSPEC" ] && echo "pubspec.yaml bulunamadı" && exit 1
 FLUTTER_DIR=$(dirname "$PUBSPEC")
@@ -25,7 +43,7 @@ echo -e "${CYAN}╚════════════════════�
 echo ""
 
 # ══════════════════════════════════════════════════════════
-# BÖLÜM 1: TEMİZLİK (önce alan aç, sonra analiz et)
+# BÖLÜM 1: TEMİZLİK
 # ══════════════════════════════════════════════════════════
 info "🧹 Eski derleme kalıntıları temizleniyor..."
 
@@ -43,28 +61,33 @@ clean_and_count() {
 }
 
 # Flutter build çıktıları
-clean_and_count "$FLUTTER_DIR/build"                        "Flutter build/"
-clean_and_count "$FLUTTER_DIR/.dart_tool"                   ".dart_tool/"
+clean_and_count "$FLUTTER_DIR/build"                         "Flutter build/"
+clean_and_count "$FLUTTER_DIR/.dart_tool"                    ".dart_tool/"
 clean_and_count "$FLUTTER_DIR/.flutter-plugins-dependencies" ".flutter-plugins-dependencies"
 
 # Android kalıntıları
-clean_and_count "$FLUTTER_DIR/android/.gradle"              "android/.gradle"
-clean_and_count "$FLUTTER_DIR/android/app/build"            "android/app/build/"
-clean_and_count "$FLUTTER_DIR/android/build"                "android/build/"
+clean_and_count "$FLUTTER_DIR/android/.gradle"               "android/.gradle"
+clean_and_count "$FLUTTER_DIR/android/app/build"             "android/app/build/"
+clean_and_count "$FLUTTER_DIR/android/build"                 "android/build/"
 
 # iOS kalıntıları
-clean_and_count "$FLUTTER_DIR/ios/build"                    "ios/build/"
-clean_and_count "$FLUTTER_DIR/ios/Pods"                     "ios/Pods/"
-clean_and_count "$FLUTTER_DIR/ios/.symlinks"                "ios/.symlinks/"
+clean_and_count "$FLUTTER_DIR/ios/build"                     "ios/build/"
+clean_and_count "$FLUTTER_DIR/ios/Pods"                      "ios/Pods/"
+clean_and_count "$FLUTTER_DIR/ios/.symlinks"                 "ios/.symlinks/"
 
-# Pub cache geçici dosyaları (sadece lock değil)
-find "$FLUTTER_DIR" -name "*.g.dart.bak" -delete 2>/dev/null || true
+# Geçici dosyalar
+find "$FLUTTER_DIR" -name "*.g.dart.bak"       -delete 2>/dev/null || true
 find "$FLUTTER_DIR" -name "*.freezed.dart.bak" -delete 2>/dev/null || true
+find /tmp -name "flutter_*" -mtime +1 -delete  2>/dev/null || true
+find /tmp -name "dart_*"    -mtime +1 -delete  2>/dev/null || true
+find /tmp -name "gradle_*"  -mtime +1 -delete  2>/dev/null || true
 
-# Eski APK kalıntıları (releases/latest dışındakiler 3'ten fazlaysa sil)
-APK_REPO="$HOME/samsun-apk-store"
-if [ -d "$APK_REPO/releases" ]; then
-  DIRS=($(ls -dt "$APK_REPO/releases/v"* 2>/dev/null || true))
+# NOT: flutter pub cache clean KALDIRILDI — build öncesi temizlik
+# build.sh zaten hallediyor, burada yapmak bir sonraki build'i yavaşlatır
+
+# Eski APK kalıntıları (son 3 tutulur)
+if [ -d "$APK_REPO_DIR/releases" ]; then
+  DIRS=($(ls -dt "$APK_REPO_DIR/releases/v"* 2>/dev/null || true))
   if [ "${#DIRS[@]}" -gt 3 ]; then
     for i in $(seq 3 $((${#DIRS[@]}-1))); do
       size=$(du -sk "${DIRS[$i]}" 2>/dev/null | awk '{print $1}')
@@ -75,18 +98,9 @@ if [ -d "$APK_REPO/releases" ]; then
   fi
 fi
 
-# Pub global cache temizle
-flutter pub cache clean --force 2>/dev/null || true
-
-# Genel temp dosyaları
-find /tmp -name "flutter_*" -mtime +1 -delete 2>/dev/null || true
-find /tmp -name "dart_*"    -mtime +1 -delete 2>/dev/null || true
-find /tmp -name "gradle_*"  -mtime +1 -delete 2>/dev/null || true
-
 FREED_MB=$((freed / 1024))
 success "Temizlik tamamlandı — yaklaşık ${FREED_MB}MB alan kazanıldı"
 
-# Disk durumu
 echo ""
 echo -e "  💾 Mevcut disk durumu:"
 df -h "$HOME" | tail -1 | awk '{printf "  Toplam: %s | Kullanılan: %s | Boş: %s (%s)\n",$2,$3,$4,$5}'
@@ -97,14 +111,10 @@ df -h "$HOME" | tail -1 | awk '{printf "  Toplam: %s | Kullanılan: %s | Boş: %
 echo ""
 info "🔍 Proje yapısı analiz ediliyor..."
 
-# pubspec bilgileri
 APP_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}' | tr -d '\r')
 VERSION_NAME=$(echo "$APP_VERSION" | cut -d'+' -f1)
-
-# lib/ klasörünü analiz et
 LIB="$FLUTTER_DIR/lib"
 
-# Dart dosyalarını kategorile
 declare -A CATEGORIES
 declare -A CAT_FILES
 declare -A CAT_LINES
@@ -116,7 +126,6 @@ detect_category() {
   local base=$(basename "$file" .dart)
   local content=$(cat "$file" 2>/dev/null)
 
-  # İçeriğe göre kategori tespit
   if echo "$content" | grep -q "class.*Screen\|class.*Page\|extends.*StatelessWidget\|extends.*StatefulWidget"; then
     if echo "$dir" | grep -qi "screen\|page\|view\|ui"; then
       echo "screens"
@@ -152,7 +161,6 @@ detect_category() {
   fi
 }
 
-# Kategorileri tanımla
 CAT_DESC["screens"]="📱 Ekranlar (UI sayfaları)"
 CAT_DESC["widgets"]="🧩 Widget'lar (tekrar kullanılabilir bileşenler)"
 CAT_DESC["state"]="⚡ State Yönetimi (Provider/Bloc/Riverpod)"
@@ -164,7 +172,6 @@ CAT_DESC["constants"]="🔧 Sabitler & Konfigürasyon"
 CAT_DESC["utils"]="🛠️ Yardımcılar (extension, mixin, util)"
 CAT_DESC["other"]="📄 Diğer"
 
-# Dosyaları tara
 while IFS= read -r file; do
   cat=$(detect_category "$file")
   lines=$(wc -l < "$file")
@@ -173,21 +180,19 @@ while IFS= read -r file; do
   CAT_FILES[$cat]="${CAT_FILES[$cat]}$(basename "$file" .dart), "
 done < <(find "$LIB" -name "*.dart" 2>/dev/null)
 
-# Bağımlılıkları kategorile
 DEPS_HTTP=$(grep -E "^\s+(http|dio|retrofit):" "$PUBSPEC" | head -5 | awk '{print $1}' | tr -d ':' | tr '\n' ', ')
 DEPS_STATE=$(grep -E "^\s+(provider|riverpod|bloc|get|getx|mobx):" "$PUBSPEC" | head -5 | awk '{print $1}' | tr -d ':' | tr '\n' ', ')
 DEPS_MAP=$(grep -E "^\s+(google_maps|flutter_map|mapbox):" "$PUBSPEC" | head -3 | awk '{print $1}' | tr -d ':' | tr '\n' ', ')
 DEPS_STORAGE=$(grep -E "^\s+(hive|sqflite|shared_preferences|isar):" "$PUBSPEC" | head -3 | awk '{print $1}' | tr -d ':' | tr '\n' ', ')
 DEPS_UTIL=$(grep -E "^\s+(intl|url_launcher|permission_handler|geolocator):" "$PUBSPEC" | head -5 | awk '{print $1}' | tr -d ':' | tr '\n' ', ')
 
-# State management tespiti
+# FIX: ** glob yerine find kullan (globstar gerektirmez)
 STATE_LIB="Belirsiz"
 [ -n "$DEPS_STATE" ] && STATE_LIB="$DEPS_STATE"
-grep -q "ChangeNotifier\|Provider" "$LIB"/**/*.dart 2>/dev/null && STATE_LIB="Provider/ChangeNotifier"
-grep -q "Bloc\|Cubit" "$LIB"/**/*.dart 2>/dev/null && STATE_LIB="BLoC/Cubit"
-grep -q "Riverpod\|ref\." "$LIB"/**/*.dart 2>/dev/null && STATE_LIB="Riverpod"
+find "$LIB" -name "*.dart" | xargs grep -ql "ChangeNotifier\|Provider" 2>/dev/null && STATE_LIB="Provider/ChangeNotifier" || true
+find "$LIB" -name "*.dart" | xargs grep -ql "Bloc\|Cubit"              2>/dev/null && STATE_LIB="BLoC/Cubit"             || true
+find "$LIB" -name "*.dart" | xargs grep -ql "Riverpod\|ref\."          2>/dev/null && STATE_LIB="Riverpod"               || true
 
-# Toplam satır
 TOTAL_LINES=$(find "$LIB" -name "*.dart" | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
 TOTAL_FILES=$(find "$LIB" -name "*.dart" | wc -l)
 
@@ -244,8 +249,8 @@ done)
                    │ State Yönetimi
                    │ (${STATE_LIB})
 ┌──────────────────▼──────────────────────────┐
-│          İŞ MANTIĞI (Business Logic)         │
-│  Controllers / Providers / Blocs             │
+│          İŞ MANTIĞI (Business Logic)        │
+│  Controllers / Providers / Blocs            │
 └──────────────────┬──────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
@@ -255,7 +260,7 @@ done)
                    │
 ┌──────────────────▼──────────────────────────┐
 │          DIŞ KAYNAKLAR (External)           │
-│  GTFS API │ SAMULAŞ API │ Google Maps        │
+│  GTFS API │ SAMULAŞ API │ Google Maps       │
 └─────────────────────────────────────────────┘
 \`\`\`
 
@@ -303,16 +308,15 @@ done)
 ARCH
 )
 
-# README'deki eski mimari bölümünü değiştir veya sona ekle
+# README'deki eski mimari bölümü varsa sil, yenisini ekle
 if grep -q "## 🏗️ Proje Mimarisi" "$README" 2>/dev/null; then
-  # Eski bölümü sil ve yenisini ekle
   python3 - << PYEOF
-content = open("$README").read()
+content = open("$README", encoding="utf-8").read()
 start = content.find("## 🏗️ Proje Mimarisi")
 end   = content.find("\n---\n", start + 10)
 if start != -1 and end != -1:
     new = content[:start] + content[end+5:]
-    open("$README", 'w').write(new)
+    open("$README", "w", encoding="utf-8").write(new)
 PYEOF
 fi
 
