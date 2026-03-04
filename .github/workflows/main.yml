@@ -1,4 +1,4 @@
-name: Flutter APK Build
+name: Samsun Mobil - APK Derle ve Dağıt
 
 on:
   push:
@@ -10,22 +10,82 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # 1) Kodu al
+      - name: Repoyu klonla
+        uses: actions/checkout@v4
 
-      - name: Flutter Kur
+      # 2) Flutter kur
+      - name: Flutter kur
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'  # Her zaman en güncel stable sürümü alır
-          cache: true        # Sonraki buildleri hızlandırır
+          channel: 'stable'
+          cache: true
 
-      - name: Bağımlılıkları Al
+      # 3) Versiyonu pubspec.yaml'dan oku
+      - name: Versiyonu oku
+        id: version
+        run: |
+          VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}' | tr -d '\r')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Versiyon: $VERSION"
+
+      # 4) Bağımlılıkları al
+      - name: Flutter pub get
         run: flutter pub get
 
-      - name: APK Derle
+      # 5) APK derle
+      - name: APK derle
         run: flutter build apk --release
 
-      - name: APK'yı Kaydet
+      # 6) APK'yı yeniden adlandır
+      - name: APK'yı hazırla
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/samsun-mobil-v${VERSION}.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/latest.apk
+
+      # 7) update.json oluştur (uygulama içi güncelleme denetimi için)
+      - name: update.json oluştur
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          BASE=$(echo $VERSION | cut -d'+' -f1)
+          BUILD=$(echo $VERSION | cut -d'+' -f2)
+          APK_URL="https://github.com/tarihcituranx/test/raw/main/samsun-mobil-v${VERSION}.apk"
+          cat > dist/update.json <<EOF
+          {
+            "version": "$BASE",
+            "build_number": $BUILD,
+            "apk_url": "$APK_URL",
+            "changelog": "Otomatik build - ${{ github.event.head_commit.message }}",
+            "force_update": false,
+            "release_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+          echo "update.json içeriği:"
+          cat dist/update.json
+
+      # 8) APK'yı dağıtım reposuna gönder
+      - name: APK reposuna gönder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git clone https://x-access-token:${GH_TOKEN}@github.com/tarihcituranx/test.git apk-repo
+          cp dist/samsun-mobil-v${VERSION}.apk apk-repo/
+          cp dist/latest.apk apk-repo/
+          cp dist/update.json apk-repo/
+          cd apk-repo
+          git add .
+          git commit -m "release: Samsun Mobil v${VERSION}" || echo "Değişiklik yok"
+          git push
+
+      # 9) Artifacts olarak da sakla (GitHub Actions üzerinden indirilebilir)
+      - name: Artifacts kaydet
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: samsun-mobil-v${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 30
