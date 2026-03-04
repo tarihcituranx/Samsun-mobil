@@ -1,0 +1,68 @@
+name: Samsun Mobil - APK Derle ve Dağıt
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Kodu al
+      - name: Repoyu klonla
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # git log/tag için tüm geçmiş lazım
+
+      # 2) Flutter kur
+      - name: Flutter kur
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-stable-${{ runner.os }}
+
+      # 3) Pub cache
+      - name: Pub cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      # 4) Gradle cache
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # 5) build.sh'ı çalıştır (her şeyi o halleder)
+      - name: Build & Deploy
+        env:
+          APK_REPO_TOKEN: ${{ secrets.APK_REPO_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GIT_USER_NAME: "GitHub Actions"
+          GIT_USER_EMAIL: "actions@github.com"
+        run: |
+          chmod +x scripts/build.sh
+          bash scripts/build.sh
+
+      # 6) Artifacts olarak da sakla (opsiyonel yedek)
+      - name: Artifacts kaydet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_number }}
+          path: logs/
+          retention-days: 14
