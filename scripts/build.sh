@@ -16,14 +16,13 @@ warn()    { echo -e "${YELLOW}⚠ $1${NC}"; }
 error()   { echo -e "${RED}❌ $1${NC}"; exit 1; }
 
 # ── CI mi yerel mi? ───────────────────────────────────────
-IS_CI="${CI:-false}"   # GitHub Actions otomatik CI=true set eder
+IS_CI="${CI:-false}"
 
 # ── Sabitler ──────────────────────────────────────────────
 APK_REPO_URL_HTTPS="https://github.com/tarihcituranx/test"
 APK_REPO_GIT="https://github.com/tarihcituranx/test.git"
 MAX_APK_KEEP=3
 
-# CI'da proje zaten checkout edilmiş olur
 if [ "$IS_CI" = "true" ]; then
   PROJECT_DIR="$GITHUB_WORKSPACE"
   APK_REPO_DIR="$RUNNER_TEMP/apk-dist"
@@ -34,6 +33,7 @@ fi
 
 PUBSPEC="$PROJECT_DIR/pubspec.yaml"
 APK_SOURCE="$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk"
+SCRIPTS_DIR="$PROJECT_DIR/scripts"
 
 # ── Log sistemi ───────────────────────────────────────────
 LOG_DIR="$PROJECT_DIR/logs"
@@ -47,27 +47,23 @@ log() {
   local level="$1"; shift
   local msg="$*"
   local ts=$(date +"%Y-%m-%d %H:%M:%S")
-  local line="[$ts] [$level] $msg"
-  echo "$line" >> "$STEP_LOG"
+  echo "[$ts] [$level] $msg" >> "$STEP_LOG"
   case "$level" in
-    INFO)    info    "$msg" ;;
-    OK)      success "$msg" ;;
-    WARN)    warn    "$msg" ;;
-    ERROR)   echo -e "${RED}❌ $msg${NC}"; exit 1 ;;
+    INFO)  info    "$msg" ;;
+    OK)    success "$msg" ;;
+    WARN)  warn    "$msg" ;;
+    ERROR) echo -e "${RED}❌ $msg${NC}"; exit 1 ;;
   esac
 }
 
 # ── Hata yakalayıcı ───────────────────────────────────────
 on_error() {
-  local exit_code=$?
-  local line_no=$1
+  local exit_code=$? line_no=$1
   local ts=$(date +"%Y-%m-%d %H:%M:%S")
   local err_file="$LOG_DIR/ERROR_${BUILD_TAG:-unknown}_${BUILD_START}.log"
-
   {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  HATA RAPORU"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  Zaman     : $ts"
     echo "  Sürüm     : ${BUILD_TAG:-bilinmiyor}"
     echo "  Exit kodu : $exit_code"
@@ -75,77 +71,51 @@ on_error() {
     echo "  Flutter   : $(flutter --version 2>/dev/null | head -1 || echo 'bulunamadı')"
     echo "  Disk      : $(df -h $HOME | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
     echo ""
-    echo "  Son 40 satır çıktı:"
-    echo "  ─────────────────────────────────────────────"
+    echo "  Son 40 satır:"
     tail -40 "$STEP_LOG" 2>/dev/null || true
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   } > "$err_file"
-
-  cp "$STEP_LOG" "$err_file" 2>/dev/null || true
-
-  echo ""
   echo -e "${RED}╔══════════════════════════════════════════╗${NC}"
   echo -e "${RED}║           BUILD BAŞARISIZ ❌             ║${NC}"
   echo -e "${RED}╚══════════════════════════════════════════╝${NC}"
-  echo -e "${RED}  Satır    : $line_no${NC}"
-  echo -e "${RED}  Sürüm    : ${BUILD_TAG:-bilinmiyor}${NC}"
-  echo -e "${RED}  Log      : $err_file${NC}"
-  echo ""
+  echo -e "${RED}  Satır : $line_no | Log : $err_file${NC}"
 }
-
 trap 'on_error $LINENO' ERR
 
 # ── Disk temizleyici ──────────────────────────────────────
 cleanup_disk() {
-  local reason="$1"
-  log INFO "🧹 Disk temizliği başlatılıyor ($reason)..."
-  local freed=0
-
+  local reason="$1"; local freed=0
+  log INFO "🧹 Disk temizliği ($reason)..."
   if [ -d "$HOME/.gradle/caches" ]; then
     local s=$(du -sm "$HOME/.gradle/caches" 2>/dev/null | cut -f1)
-    rm -rf "$HOME/.gradle/caches"
+    rm -rf "$HOME/.gradle/caches"; freed=$((freed+s))
     log OK "Gradle cache silindi (~${s}MB)"
-    freed=$((freed + s))
   fi
-
   if [ -d "$PROJECT_DIR/build" ]; then
     local s=$(du -sm "$PROJECT_DIR/build" 2>/dev/null | cut -f1)
     flutter clean --suppress-analytics 2>/dev/null || rm -rf "$PROJECT_DIR/build"
-    log OK "Flutter build temizlendi (~${s}MB)"
-    freed=$((freed + s))
+    freed=$((freed+s)); log OK "Flutter build temizlendi (~${s}MB)"
   fi
-
   rm -rf /tmp/cmdtools* /tmp/gradle* /tmp/flutter* /tmp/dart* /tmp/*.zip /tmp/*.apk 2>/dev/null || true
-  log OK "/tmp temizlendi"
-
   if [ -d "$HOME/.pub-cache/hosted" ]; then
     local s=$(du -sm "$HOME/.pub-cache/hosted" 2>/dev/null | cut -f1)
-    rm -rf "$HOME/.pub-cache/hosted"
+    rm -rf "$HOME/.pub-cache/hosted"; freed=$((freed+s))
     log OK "Pub cache temizlendi (~${s}MB)"
-    freed=$((freed + s))
   fi
-
   rm -rf "$HOME/.android/cache" 2>/dev/null || true
-
   ls -1t "$LOG_DIR"/*.log 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
-
   local free_after=$(df -k $HOME | awk 'NR==2 {print int($4/1024)}')
   log OK "Temizlik bitti — Boş: ${free_after}MB (~${freed}MB kazanıldı)"
 }
 
-# ── Disk kontrol ──────────────────────────────────────────
 check_disk() {
   local min_mb="${1:-1500}"
   local free_mb=$(df -k $HOME | awk 'NR==2 {print int($4/1024)}')
   local used_pct=$(df $HOME | awk 'NR==2 {print int($5)}')
   log INFO "Disk: ${free_mb}MB boş (%${used_pct} dolu)"
-  if [ "$free_mb" -lt "$min_mb" ]; then
-    log WARN "Yetersiz disk! ${free_mb}MB < ${min_mb}MB — temizlik zorunlu"
-    cleanup_disk "low_disk"
-  fi
+  [ "$free_mb" -lt "$min_mb" ] && { log WARN "Yetersiz disk — temizlik"; cleanup_disk "low_disk"; }
 }
 
-# ── Git token ayarla (CI için) ────────────────────────────
 setup_git_auth() {
   if [ "$IS_CI" = "true" ] && [ -n "$APK_REPO_TOKEN" ]; then
     git config --global url."https://x-access-token:${APK_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
@@ -153,6 +123,51 @@ setup_git_auth() {
   fi
   git config --global user.name  "${GIT_USER_NAME:-GitHub Actions}"
   git config --global user.email "${GIT_USER_EMAIL:-actions@github.com}"
+}
+
+# ── Bağımlılık düzeltici ──────────────────────────────────
+fix_dependencies() {
+  log INFO "Bağımlılıklar kontrol ediliyor..."
+  local fix_script="$SCRIPTS_DIR/fix_deps.py"
+
+  if [ -f "$fix_script" ]; then
+    python3 "$fix_script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
+    local exit_code=${PIPESTATUS[0]}
+    if [ $exit_code -ne 0 ]; then
+      log ERROR "Bağımlılık sorunu çözülemedi! pubspec.yaml'ı manuel kontrol et."
+    fi
+    log OK "Bağımlılıklar hazır"
+  else
+    log WARN "fix_deps.py bulunamadı, doğrudan flutter pub get deneniyor..."
+    if ! flutter pub get 2>&1 | tee -a "$LOG_FILE"; then
+      log WARN "flutter pub get başarısız, upgrade deneniyor..."
+      flutter pub upgrade --major-versions 2>&1 | tee -a "$LOG_FILE" || \
+        log ERROR "Bağımlılık sorunu çözülemedi!"
+    fi
+  fi
+}
+
+# ── Opsiyonel script çalıştırıcı ─────────────────────────
+run_optional() {
+  local script="$1"
+  if [ -f "$SCRIPTS_DIR/$script" ]; then
+    log INFO "$script çalıştırılıyor..."
+    bash "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
+    log OK "$script tamamlandı"
+  else
+    log WARN "$script bulunamadı, atlanıyor"
+  fi
+}
+
+run_optional_py() {
+  local script="$1"
+  if [ -f "$SCRIPTS_DIR/$script" ]; then
+    log INFO "$script çalıştırılıyor..."
+    python3 "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
+    log OK "$script tamamlandı"
+  else
+    log WARN "$script bulunamadı, atlanıyor"
+  fi
 }
 
 # ════════════════════════════════════════════════
@@ -166,7 +181,7 @@ echo ""
 
 setup_git_auth
 
-# ── 1. Repo hazırla (yerel modda klonla/güncelle) ─────────
+# ── 1. Repo hazırla ───────────────────────────────────────
 if [ "$IS_CI" = "false" ]; then
   if [ -d "$PROJECT_DIR/.git" ]; then
     log INFO "Repo güncelleniyor..."
@@ -180,11 +195,10 @@ if [ "$IS_CI" = "false" ]; then
 fi
 
 cd "$PROJECT_DIR"
+[ ! -f "$PUBSPEC" ] && PUBSPEC=$(find "$PROJECT_DIR" -name "pubspec.yaml" | head -1)
 
 # ── 2. Sürüm tespit ───────────────────────────────────────
 log INFO "Sürüm tespit ediliyor..."
-[ ! -f "$PUBSPEC" ] && PUBSPEC=$(find "$PROJECT_DIR" -name "pubspec.yaml" | head -1)
-
 CURRENT_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}' | tr -d '\r')
 VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
 VERSION_CODE=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
@@ -200,29 +214,26 @@ LOG_FILE="$LOG_DIR/build_${BUILD_TAG}_${BUILD_START}.log"
 {
   echo "════════════════════════════════════════════════"
   echo "  Samsun Mobil — Build Log"
-  echo "  Sürüm   : $BUILD_TAG"
+  echo "  Sürüm    : $BUILD_TAG"
   echo "  Başlangıç: $(date '+%d.%m.%Y %H:%M:%S')"
-  echo "  CI      : $IS_CI"
-  echo "  Flutter : $(flutter --version 2>/dev/null | head -1 || echo 'N/A')"
-  echo "  Disk    : $(df -h $HOME | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
+  echo "  CI       : $IS_CI"
+  echo "  Flutter  : $(flutter --version 2>/dev/null | head -1 || echo 'N/A')"
+  echo "  Disk     : $(df -h $HOME | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
   echo "════════════════════════════════════════════════"
 } > "$LOG_FILE"
-
 cat "$STEP_LOG" >> "$LOG_FILE"
 STEP_LOG="$LOG_FILE"
 
 log INFO "Mevcut sürüm : $VERSION_NAME+$VERSION_CODE"
 log INFO "Yeni build   : $BUILD_TAG"
 
-# ── 3. pubspec güncelle ───────────────────────────────────
+# ── 3. pubspec versiyonunu güncelle ───────────────────────
 log INFO "pubspec.yaml güncelleniyor..."
 sed -i "s/^version: .*/version: ${VERSION_NAME}+${NEW_CODE}/" "$PUBSPEC"
 log OK "pubspec.yaml → version: ${VERSION_NAME}+${NEW_CODE}"
 
 # ── 4. Sürüm notları ──────────────────────────────────────
 log INFO "Sürüm notları oluşturuluyor..."
-
-# CI'da commit mesajından al, yerel modda kullanıcıdan sor
 if [ "$IS_CI" = "true" ]; then
   CHANGELOG="${COMMIT_MESSAGE:-Otomatik build - $BUILD_TAG}"
 else
@@ -244,10 +255,10 @@ echo "$RELEASE_NOTES" >> "$LOG_FILE"
 cleanup_disk "pre_build"
 check_disk 1500
 
-# ── 6. Flutter build ──────────────────────────────────────
-log INFO "Flutter bağımlılıkları yükleniyor..."
-flutter pub get 2>&1 | tee -a "$LOG_FILE"
+# ── 6. Bağımlılıkları düzelt ve yükle ────────────────────
+fix_dependencies
 
+# ── 7. APK derle ──────────────────────────────────────────
 log INFO "APK derleniyor (release)... ☕"
 FLUTTER_BUILD_START=$(date +%s)
 flutter build apk --release 2>&1 | tee -a "$LOG_FILE"
@@ -255,11 +266,10 @@ FLUTTER_BUILD_END=$(date +%s)
 BUILD_DURATION=$((FLUTTER_BUILD_END - FLUTTER_BUILD_START))
 
 [ ! -f "$APK_SOURCE" ] && log ERROR "APK bulunamadı: $APK_SOURCE"
-
 APK_SIZE=$(du -sh "$APK_SOURCE" | cut -f1)
 log OK "APK derlendi — Boyut: $APK_SIZE — Süre: ${BUILD_DURATION}s"
 
-# ── 7. APK deposu hazırla ─────────────────────────────────
+# ── 8. APK deposu ─────────────────────────────────────────
 log INFO "APK deposu hazırlanıyor..."
 if [ -d "$APK_REPO_DIR/.git" ]; then
   git -C "$APK_REPO_DIR" pull origin main 2>&1 | tee -a "$LOG_FILE"
@@ -269,13 +279,12 @@ fi
 
 cd "$APK_REPO_DIR"
 mkdir -p "releases/$FOLDER_NAME" "releases/latest"
-
 cp "$APK_SOURCE" "releases/$FOLDER_NAME/$APK_FINAL_NAME"
 cp "$APK_SOURCE" "releases/latest/app-release.apk"
 cp "$APK_SOURCE" "releases/latest/$APK_FINAL_NAME"
 
-# ── 8. Eski APK temizle ───────────────────────────────────
-log INFO "Eski APK'lar temizleniyor (son $MAX_APK_KEEP tutulacak)..."
+# ── 9. Eski APK temizle ───────────────────────────────────
+log INFO "Eski APK'lar temizleniyor (son $MAX_APK_KEEP)..."
 RELEASE_DIRS=($(ls -dt releases/v* 2>/dev/null || true))
 TOTAL=${#RELEASE_DIRS[@]}
 if [ "$TOTAL" -gt "$MAX_APK_KEEP" ]; then
@@ -285,10 +294,9 @@ if [ "$TOTAL" -gt "$MAX_APK_KEEP" ]; then
   done
 fi
 
-# ── 9. version.json ───────────────────────────────────────
+# ── 10. version.json ──────────────────────────────────────
 log INFO "version.json güncelleniyor..."
 APK_DOWNLOAD_URL="${APK_REPO_URL_HTTPS}/raw/main/releases/latest/app-release.apk"
-
 cat > releases/version.json << JSON
 {
   "latestVersion": "${VERSION_NAME}",
@@ -306,14 +314,14 @@ cat > releases/version.json << JSON
 JSON
 log OK "version.json güncellendi"
 
-# ── 10. APK repo push ─────────────────────────────────────
+# ── 11. APK repo push ─────────────────────────────────────
 log INFO "APK deposu GitHub'a gönderiliyor..."
 git add . 2>&1 | tee -a "$LOG_FILE"
 git commit -m "release: ${BUILD_TAG} - $(date '+%d.%m.%Y %H:%M')" 2>&1 | tee -a "$LOG_FILE"
 git push origin main 2>&1 | tee -a "$LOG_FILE"
 log OK "APK deposu güncellendi"
 
-# ── 11. Ana repo push ─────────────────────────────────────
+# ── 12. Ana repo push ─────────────────────────────────────
 log INFO "Ana repo GitHub'a gönderiliyor..."
 cd "$PROJECT_DIR"
 git add pubspec.yaml 2>&1 | tee -a "$LOG_FILE"
@@ -323,28 +331,12 @@ git tag -a "${BUILD_TAG}" -m "Sürüm ${BUILD_TAG}" 2>&1 | tee -a "$LOG_FILE"
 git push origin --tags 2>&1 | tee -a "$LOG_FILE"
 log OK "Ana repo güncellendi"
 
-# ── 12. Ek scriptler (varsa çalıştır) ────────────────────
-run_optional() {
-  local script="$1"
-  if [ -f "$PROJECT_DIR/scripts/$script" ]; then
-    log INFO "$script çalıştırılıyor..."
-    bash "$PROJECT_DIR/scripts/$script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
-    log OK "$script tamamlandı"
-  else
-    log WARN "$script bulunamadı, atlanıyor"
-  fi
-}
+# ── 13. Ek scriptler ──────────────────────────────────────
+run_optional    "project_map.sh"   # README + mimari harita + temizlik
+run_optional    "bug_scan.sh"      # Kaynak + APK tarayıcı
+run_optional_py "brain_update.py"  # PROJECT_BRAIN.md güncelleyici
 
-run_optional "project_map.sh"
-run_optional "bug_scan.sh"
-
-if [ -f "$PROJECT_DIR/scripts/brain_update.py" ]; then
-  log INFO "brain_update.py çalıştırılıyor..."
-  python3 "$PROJECT_DIR/scripts/brain_update.py" 2>&1 | tee -a "$LOG_FILE"
-  log OK "Beyin güncellendi"
-fi
-
-# ── 13. Log kapanış ───────────────────────────────────────
+# ── 14. Log kapanış ───────────────────────────────────────
 {
   echo ""
   echo "════════════════════════════════════════════════"
@@ -355,7 +347,7 @@ fi
   echo "════════════════════════════════════════════════"
 } >> "$LOG_FILE"
 
-# ── 14. Eski logları temizle ──────────────────────────────
+# ── 15. Eski logları temizle ──────────────────────────────
 ls -1t "$LOG_DIR"/build_*.log 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
 
 # ── Özet ──────────────────────────────────────────────────
@@ -371,7 +363,6 @@ echo -e "📂 Klasör   : ${CYAN}releases/${FOLDER_NAME}${NC}"
 echo -e "🔗 İndir    : ${CYAN}${APK_DOWNLOAD_URL}${NC}"
 echo -e "📋 Log      : ${CYAN}${LOG_FILE}${NC}"
 echo ""
-
 echo -e "${BLUE}── Son Build Logları ──────────────────────${NC}"
 ls -1t "$LOG_DIR"/*.log 2>/dev/null | head -5 | while read f; do
   SIZE=$(du -sh "$f" | cut -f1)
