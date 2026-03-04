@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:samsun_ulasim/services/update_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../main.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -171,6 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (v) {
               setState(() => _selectedLanguage = v!);
               _savePreference('language', v!);
+              SamsunRouteApp.setLocale(context, v == 'English' ? const Locale('en') : const Locale('tr'));
               Navigator.pop(ctx);
             },
           )).toList(),

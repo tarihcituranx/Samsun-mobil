@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:samsun_ulasim/services/synchronization_service.dart';
 import 'screens/home_screen.dart';
 
@@ -8,14 +10,53 @@ void main() async {
   runApp(const SamsunRouteApp());
 }
 
-class SamsunRouteApp extends StatelessWidget {
+class SamsunRouteApp extends StatefulWidget {
   const SamsunRouteApp({Key? key}) : super(key: key);
+
+  static void setLocale(BuildContext context, Locale locale) {
+    final state = context.findAncestorStateOfType<_SamsunRouteAppState>();
+    state?._changeLocale(locale);
+  }
+
+  @override
+  State<SamsunRouteApp> createState() => _SamsunRouteAppState();
+}
+
+class _SamsunRouteAppState extends State<SamsunRouteApp> {
+  Locale _locale = const Locale('tr');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLocale();
+  }
+
+  Future<void> _loadSavedLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('language') ?? 'Türkçe';
+    if (mounted) {
+      setState(() {
+        _locale = lang == 'English' ? const Locale('en') : const Locale('tr');
+      });
+    }
+  }
+
+  void _changeLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Samsun Ulaşım Sistemi',
       debugShowCheckedModeBanner: false,
+      locale: _locale,
+      supportedLocales: const [Locale('tr'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF0A1628),
         brightness: Brightness.dark,
