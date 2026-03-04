@@ -33,9 +33,12 @@ samples, guidance on mobile development, and a full API reference.
 
 ---
 
+
+---
+
 ## 🏗️ Proje Mimarisi
 
-> Otomatik analiz ile oluşturuldu — 04.03.2026 20:57
+> Otomatik analiz ile oluşturuldu — 04.03.2026 22:05
 
 ### 📊 Genel Bakış
 
