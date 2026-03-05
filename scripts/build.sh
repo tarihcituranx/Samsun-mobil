@@ -394,9 +394,30 @@ cp "$APK_SOURCE" "releases/$FOLDER_NAME/$APK_FINAL_NAME"
 cp "$APK_SOURCE" "releases/latest/app-release.apk"
 cp "$APK_SOURCE" "releases/latest/$APK_FINAL_NAME"
 
+# ── Her sürüm klasörüne kısa bilgi kartı yaz ──────────────
+cat > "releases/$FOLDER_NAME/SURUMU_OKU.md" << CARD
+# 📦 ${BUILD_TAG}
+
+| Alan        | Değer |
+|-------------|-------|
+| 🏷 Sürüm   | ${VERSION_NAME} (build ${NEW_CODE}) |
+| 📅 Tarih    | $(date '+%d.%m.%Y %H:%M') |
+| 📦 Boyut    | ${APK_SIZE} |
+| ⏱ Derleme  | ${BUILD_DURATION}s |
+| 🔖 Durum    | ✅ STABLE |
+
+## İndir
+[${APK_FINAL_NAME}](${APK_REPO_URL_HTTPS}/raw/main/releases/${FOLDER_NAME}/${APK_FINAL_NAME})
+
+## Değişiklikler
+${CHANGELOG}
+
+## Git Notları
+${RELEASE_NOTES}
+CARD
+
 # ── 9. Eski APK temizle ───────────────────────────────────
 log INFO "Eski APK'lar temizleniyor (son $MAX_APK_KEEP)..."
-# ls yerine glob + mapfile kullan (boşluklu isim güvenliği)
 mapfile -t RELEASE_DIRS < <(ls -dt releases/v* 2>/dev/null || true)
 TOTAL=${#RELEASE_DIRS[@]}
 if [ "$TOTAL" -gt "$MAX_APK_KEEP" ]; then
@@ -426,6 +447,53 @@ cat > releases/version.json << JSON
 JSON
 log OK "version.json güncellendi"
 
+# ── 10b. Ana README — sürüm tablosu ───────────────────────
+log INFO "README.md (sürüm tablosu) güncelleniyor..."
+{
+  echo "# 📱 Samsun Mobil — APK Sürümleri"
+  echo ""
+  echo "> Son güncelleme: $(date '+%d.%m.%Y %H:%M')"
+  echo ""
+  echo "## ⬇️ En Son Kararlı Sürüm (STABLE)"
+  echo ""
+  echo "| Alan | Değer |"
+  echo "|------|-------|"
+  echo "| 🏷 Sürüm | **${BUILD_TAG}** |"
+  echo "| 📅 Tarih | $(date '+%d.%m.%Y %H:%M') |"
+  echo "| 📦 Boyut | ${APK_SIZE} |"
+  echo "| ⏱ Derleme | ${BUILD_DURATION}s |"
+  echo ""
+  echo "### [📥 APK İndir — ${APK_FINAL_NAME}](${APK_REPO_URL_HTTPS}/raw/main/releases/latest/app-release.apk)"
+  echo ""
+  echo "---"
+  echo ""
+  echo "## 📂 Tüm Sürümler"
+  echo ""
+  echo "| Klasör | Sürüm | Tarih | Durum | İndir |"
+  echo "|--------|-------|-------|-------|-------|"
+
+  for dir in $(ls -dt releases/v* 2>/dev/null); do
+    dir_name=$(basename "$dir")
+    ver=$(echo "$dir_name" | sed 's/_build.*//')
+    build_no=$(echo "$dir_name" | sed 's/.*_build\([0-9]*\)_.*/\1/')
+    raw_date=$(echo "$dir_name" | sed 's/.*_build[0-9]*_//')
+    friendly_date=$(echo "$raw_date" | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)/\3.\2.\1 \4:\5/')
+    apk_file=$(ls "$dir"/*.apk 2>/dev/null | head -1)
+    apk_name=$(basename "$apk_file" 2>/dev/null || echo "apk")
+    if [ "$dir_name" = "$FOLDER_NAME" ]; then
+      durum="✅ **STABLE**"
+    else
+      durum="📦 Eski"
+    fi
+    echo "| \`${dir_name}\` | ${ver}+${build_no} | ${friendly_date} | ${durum} | [İndir](${APK_REPO_URL_HTTPS}/raw/main/${dir}/${apk_name}) |"
+  done
+
+  echo ""
+  echo "---"
+  echo "_Bu dosya her build'de otomatik güncellenir._"
+} > README.md
+log OK "README.md güncellendi"
+
 # ── 11. APK repo push ─────────────────────────────────────
 log INFO "APK deposu GitHub'a gönderiliyor..."
 git add . 2>&1 | tee -a "$LOG_FILE"
@@ -434,10 +502,15 @@ git push origin main 2>&1 | tee -a "$LOG_FILE"
 log OK "APK deposu güncellendi"
 
 # ── 12. Ana repo push ─────────────────────────────────────
+# NOT: APK repo push sırasında (adım 11) başka bir commit ana repoya girebilir
+# (önceki yarım kalan build, paralel workflow vb.). Bu durumda non-fast-forward
+# hatası alınır. Çözüm: push öncesi rebase ile uzak değişiklikleri al.
 log INFO "Ana repo GitHub'a gönderiliyor..."
 cd "$PROJECT_DIR"
 git add pubspec.yaml 2>&1 | tee -a "$LOG_FILE"
 git commit -m "build: ${BUILD_TAG} - APK yayınlandı" 2>&1 | tee -a "$LOG_FILE"
+# Push öncesi uzak değişiklikleri rebase ile al (non-fast-forward önlemi)
+git pull --rebase origin main 2>&1 | tee -a "$LOG_FILE"
 git push origin main 2>&1 | tee -a "$LOG_FILE"
 git tag -a "${BUILD_TAG}" -m "Sürüm ${BUILD_TAG}" 2>&1 | tee -a "$LOG_FILE"
 git push origin --tags 2>&1 | tee -a "$LOG_FILE"
