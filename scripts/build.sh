@@ -6,6 +6,7 @@
 # ============================================================
 
 set -e
+set -o pipefail   # pipe içindeki herhangi bir komut başarısız olursa tüm pipe başarısız sayılır
 
 # ── Renkli çıktı ──────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -125,8 +126,15 @@ cleanup_disk() {
   if [ -d "$HOME/.pub-cache/hosted" ]; then
     local s
     s=$(du -sm "$HOME/.pub-cache/hosted" 2>/dev/null | cut -f1)
-    rm -rf "$HOME/.pub-cache/hosted"; freed=$((freed+s))
-    log OK "Pub cache temizlendi (~${s}MB)"
+    # pub-cache'i sadece çok az disk kaldıysa sil; aksi hâlde fix_dependencies sonra yeniden indirmek zorunda kalır
+    local free_check
+    free_check=$(df -k "$HOME" | awk 'NR==2 {print int($4/1024)}')
+    if [ "$free_check" -lt 800 ]; then
+      rm -rf "$HOME/.pub-cache/hosted"; freed=$((freed+s))
+      log OK "Pub cache temizlendi (~${s}MB) [kritik disk durumu]"
+    else
+      log WARN "Pub cache korundu (~${s}MB) — build için gerekli"
+    fi
   fi
   rm -rf "$HOME/.android/cache" 2>/dev/null || true
   ls -1t "$LOG_DIR"/*.log 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
@@ -307,13 +315,49 @@ if [ -f "$PROJECT_DIR/tests/test_api_endpoints.py" ]; then
 fi
 
 # ── 7. APK derle ──────────────────────────────────────────
+
+# Keystore ve signing config kontrolü
+log INFO "Signing config doğrulanıyor..."
+KEYSTORE_PATH="$PROJECT_DIR/android/app/samsun_ulasim.jks"
+KEY_PROPS="$PROJECT_DIR/android/key.properties"
+
+if [ ! -f "$KEYSTORE_PATH" ]; then
+  log ERROR "Keystore bulunamadı: $KEYSTORE_PATH — KEYSTORE_BASE64 secret'ını kontrol et"
+fi
+if [ ! -f "$KEY_PROPS" ]; then
+  log ERROR "key.properties bulunamadı: $KEY_PROPS"
+fi
+log OK "Signing config mevcut ($(du -sh "$KEYSTORE_PATH" | cut -f1))"
+
+# Gradle bellek ayarlarını güçlendir (CI'da varsayılan çok düşük)
+GRADLE_PROPS="$PROJECT_DIR/android/gradle.properties"
+if ! grep -q "org.gradle.jvmargs" "$GRADLE_PROPS" 2>/dev/null; then
+  echo "" >> "$GRADLE_PROPS"
+  echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> "$GRADLE_PROPS"
+  log OK "Gradle JVM heap 4g'e yükseltildi"
+else
+  # Mevcut satırı daha yüksek değerle değiştir
+  sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError/' "$GRADLE_PROPS"
+  log OK "Gradle JVM heap 4g'e güncellendi"
+fi
+
+# Gradle daemon ve paralel build
+grep -q "org.gradle.daemon" "$GRADLE_PROPS" 2>/dev/null || echo "org.gradle.daemon=false" >> "$GRADLE_PROPS"
+grep -q "org.gradle.parallel" "$GRADLE_PROPS" 2>/dev/null || echo "org.gradle.parallel=true" >> "$GRADLE_PROPS"
+grep -q "org.gradle.caching" "$GRADLE_PROPS" 2>/dev/null || echo "org.gradle.caching=true" >> "$GRADLE_PROPS"
+
 log INFO "APK derleniyor (release)... ☕"
 FLUTTER_BUILD_START=$(date +%s)
-flutter build apk --release 2>&1 | tee -a "$LOG_FILE"
+
+# --verbose: Gradle stacktrace göster; pipefail ile pipe'daki hata yakalanır
+flutter build apk --release --verbose 2>&1 | tee -a "$LOG_FILE"
+
 FLUTTER_BUILD_END=$(date +%s)
 BUILD_DURATION=$((FLUTTER_BUILD_END - FLUTTER_BUILD_START))
 
-[ ! -f "$APK_SOURCE" ] && log ERROR "APK bulunamadı: $APK_SOURCE"
+if [ ! -f "$APK_SOURCE" ]; then
+  log ERROR "APK bulunamadı: $APK_SOURCE — yukarıdaki Gradle çıktısını incele"
+fi
 APK_SIZE=$(du -sh "$APK_SOURCE" | cut -f1)
 log OK "APK derlendi — Boyut: $APK_SIZE — Süre: ${BUILD_DURATION}s"
 
