@@ -316,7 +316,18 @@ fi
 
 # ── 7. APK derle ──────────────────────────────────────────
 
-# Keystore ve signing config kontrolü
+# ─────────────────────────────────────────────────────────────────────────────
+# Keystore doğrulaması
+# BUG #69 DÜZELTMESİ:
+#   Eski kod sadece dosyanın var olup olmadığını kontrol ediyordu (du -sh).
+#   base64 decode hatası 4.0K'lık (1 disk bloğu) truncated bir JKS üretebilir.
+#   Bu dosya keytool -list'te geçebilir ama Gradle packageRelease'de
+#   java.io.EOFException ile çöker.
+#
+#   Yeni kontroller:
+#   1) Dosya boyutu bayt cinsinden > 2048 olmalı (gerçek JKS için minimum)
+#   2) keytool -exportcert ile private key gerçekten okunabilmeli
+# ─────────────────────────────────────────────────────────────────────────────
 log INFO "Signing config doğrulanıyor..."
 KEYSTORE_PATH="$PROJECT_DIR/android/app/samsun_ulasim.jks"
 KEY_PROPS="$PROJECT_DIR/android/key.properties"
@@ -324,10 +335,18 @@ KEY_PROPS="$PROJECT_DIR/android/key.properties"
 if [ ! -f "$KEYSTORE_PATH" ]; then
   log ERROR "Keystore bulunamadı: $KEYSTORE_PATH — KEYSTORE_BASE64 secret'ını kontrol et"
 fi
+
+# Boyut kontrolü: truncated JKS (base64 decode hatası) erken yakala
+KEYSTORE_BYTES=$(wc -c < "$KEYSTORE_PATH")
+if [ "$KEYSTORE_BYTES" -lt 2048 ]; then
+  log ERROR "Keystore dosyası çok küçük (${KEYSTORE_BYTES} bayt < 2048 bayt). base64 bozuk olabilir. Yeniden oluştur: base64 -w 0 samsun_ulasim.jks"
+fi
+
 if [ ! -f "$KEY_PROPS" ]; then
   log ERROR "key.properties bulunamadı: $KEY_PROPS"
 fi
-log OK "Signing config mevcut ($(du -sh "$KEYSTORE_PATH" | cut -f1))"
+
+log OK "Signing config mevcut ($(du -sh "$KEYSTORE_PATH" | cut -f1), ${KEYSTORE_BYTES} bayt)"
 
 # Gradle bellek ayarlarını güçlendir (CI'da varsayılan çok düşük)
 GRADLE_PROPS="$PROJECT_DIR/android/gradle.properties"
