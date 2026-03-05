@@ -16,7 +16,11 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 if (call.method == "installApk") {
-                    val filePath = call.argument<String>("filePath") ?: return@setMethodCallHandler
+                    val filePath = call.argument<String>("filePath")
+                    if (filePath == null) {
+                        result.error("INVALID_ARGUMENT", "filePath is required", null)
+                        return@setMethodCallHandler
+                    }
                     try {
                         val file = File(filePath)
                         val uri = FileProvider.getUriForFile(
