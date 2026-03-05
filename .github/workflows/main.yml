@@ -38,12 +38,18 @@ jobs:
       - name: Flutter analiz
         run: flutter analyze || true
 
-  # ── APK build: sadece 'build:' prefix veya manual dispatch ──
+  # ── APK build: sadece elle tetikleme veya commit mesajında [release] etiketi ──
+  #
+  #   Nasıl tetiklenir?
+  #   1) GitHub → Actions → "Run workflow" butonu  (her zaman)
+  #   2) git commit -m "[release] Harita güncellemesi"  (commit mesajına [release] ekle)
+  #
+  #   Normal commit'ler (bug fix, refactor, dosya düzeni vb.) build BAŞLATMAZ.
   build:
     needs: analyze
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      startsWith(github.event.head_commit.message, 'build:')
+      contains(github.event.head_commit.message, '[release]')
     runs-on: ubuntu-latest
     steps:
       # 1) Kodu al
@@ -90,14 +96,46 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/samsun_ulasim.jks
 
       # 6) key.properties oluştur
+      # HATA KAYNAĞI (ESKİ): heredoc (cat << EOF) YAML içinde girintili yazılırsa
+      #   her satırın başına boşluk ekler → Gradle "  storePassword=..." tanımaz
+      #   → key null → signing çöker → 11 dakika boşa gider
+      # ÇÖZÜM: echo ile satır satır yaz, baştaki boşluk oluşmaz.
       - name: key.properties yaz
         run: |
-          cat > android/key.properties << EOF
-          storePassword=${{ secrets.STORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=samsun_ulasim.jks
-          EOF
+          {
+            echo "storePassword=${{ secrets.STORE_PASSWORD }}"
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}"
+            echo "storeFile=samsun_ulasim.jks"
+          } > android/key.properties
+
+      # 6b) Keystore ve signing doğrula — yanlış şifre/alias'ta build başlamadan hata ver
+      - name: Signing config doğrula
+        run: |
+          echo "=== Keystore kontrol ==="
+          ls -lh android/app/samsun_ulasim.jks || { echo "HATA: keystore yok!"; exit 1; }
+          keytool -list \
+            -keystore android/app/samsun_ulasim.jks \
+            -storepass "${{ secrets.STORE_PASSWORD }}" \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            2>&1 | head -10 || { echo "HATA: keystore açılamadı — şifre veya alias yanlış!"; exit 1; }
+          echo "=== key.properties (baştaki boşluk kontrolü: $ işareti satır sonu demek) ==="
+          cat -A android/key.properties
+          echo "=== Signing OK ==="
+
+      # 6c) Gradle bellek ayarları (varsayılan ~512m-1g → release build için 4g gerekli)
+      - name: Gradle bellek ayarla
+        run: |
+          GRADLE_PROPS="android/gradle.properties"
+          if grep -q "org.gradle.jvmargs" "$GRADLE_PROPS" 2>/dev/null; then
+            sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m/' "$GRADLE_PROPS"
+          else
+            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> "$GRADLE_PROPS"
+          fi
+          grep -q "org.gradle.daemon"   "$GRADLE_PROPS" || echo "org.gradle.daemon=false"  >> "$GRADLE_PROPS"
+          grep -q "org.gradle.parallel" "$GRADLE_PROPS" || echo "org.gradle.parallel=true" >> "$GRADLE_PROPS"
+          echo "=== gradle.properties son hali ==="
+          cat "$GRADLE_PROPS"
 
       # 7) build.sh'ı çalıştır (her şeyi o halleder)
       - name: Build & Deploy
@@ -110,7 +148,7 @@ jobs:
           chmod +x scripts/build.sh
           bash scripts/build.sh
 
-      # 8) Artifacts olarak da sakla (opsiyonel yedek)
+      # 8) Build logları artifact
       - name: Artifacts kaydet
         if: always()
         uses: actions/upload-artifact@v4
