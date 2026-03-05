@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 05.03.2026 00:37
+> **Son güncelleme:** 05.03.2026 10:53
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+18
+- **Sürüm:** 1.0.0+20
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -24,7 +24,7 @@
 
 ## 📊 Kod İstatistikleri
 - Dart dosyası: 28
-- Toplam satır: 7118
+- Toplam satır: 7247
 
 ## 📁 Klasör Yapısı
 lib/
@@ -81,8 +81,8 @@ lib/
 - version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 05.03.2026 00:37
-- Son commit: build: v1.0.0+18 - APK yayınlandı
+- Tarih: 05.03.2026 10:53
+- Son commit: build: v1.0.0+20 - APK yayınlandı
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
@@ -94,9 +94,9 @@ lib/
 
 ## 📜 Git Geçmişi (Son 5)
 ```
-97d139d build: v1.0.0+18 - APK yayınlandı
-5657283 Merge pull request #4 from tarihcituranx/copilot/fix-android-license-issue
-140d7d4 Add transfer rules, OSRM road polylines, ring direction switch, SamAir names, logo resize
-7310105 brain: hafıza güncellendi — 05.03.2026 00:06
-6e65e64 build: v1.0.0+17 - APK yayınlandı
+9da1feb build: v1.0.0+20 - APK yayınlandı
+f5a36cb Update api_service.dart
+53ff9f7 build: v1.0.0+19 - APK yayınlandı
+925abdd Update GitHub Actions workflow for APK build process
+874a348 Update create_keystore.yml
 ```
