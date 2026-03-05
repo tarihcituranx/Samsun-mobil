@@ -22,7 +22,7 @@ class SamairVehicleDetailWidget extends StatelessWidget {
     final hasilat = (busData['toplamHasilat'] ?? busData['ToplamHasilat'] ?? '0').toString();
     final maxHiz = (busData['maxHiz'] ?? busData['MaxHiz'] ?? '0').toString();
     final mesafe = (busData['mesafe'] ?? busData['Mesafe'] ?? '0').toString();
-    final yon = (busData['yon'] ?? busData['Yon'] ?? '0').toString();
+    final yon = (busData['bearing'] ?? busData['yon'] ?? busData['Yon'] ?? '0').toString();
     final lastUpdate = (busData['lastUpdate'] ?? busData['editDate'] ?? busData['tarih'] ?? '').toString();
     String updateStr = '';
     if (lastUpdate.isNotEmpty) {

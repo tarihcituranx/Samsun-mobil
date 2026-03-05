@@ -1,7 +1,11 @@
+# Test results (generated)
+tests/test_results.json
+
 # Miscellaneous
 *.class
 *.log
 *.pyc
+__pycache__/
 *.swp
 .DS_Store
 .atom/
@@ -30,6 +34,9 @@
 # Android
 /android/key.properties
 /android/*.keystore
+*.jks
+*.b64
+keystore_b64.txt
 /android/gradlew
 /android/gradle.bat
 /android/local.properties
