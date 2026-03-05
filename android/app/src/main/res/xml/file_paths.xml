@@ -3,4 +3,6 @@
     <!-- İndirilen APK dosyaları için geçici dizin -->
     <cache-path name="apk_cache" path="." />
     <external-cache-path name="external_apk_cache" path="." />
+    <external-path name="external_files" path="." />
+    <files-path name="files" path="." />
 </paths>

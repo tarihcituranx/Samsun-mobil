@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:samsun_ulasim/services/update_checker.dart';
+import 'package:samsun_ulasim/services/update_service.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String message;
@@ -22,7 +22,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _checkUpdate() async {
     // Güncelleme kontrolünü başlat
-    await UpdateChecker.check(context);
+    await UpdateService.checkForUpdate(context);
   }
 
   @override

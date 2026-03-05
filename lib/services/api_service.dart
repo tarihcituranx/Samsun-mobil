@@ -150,23 +150,26 @@ class ApiService {
     for (final item in _list(json.decode(utf8.decode(r.bodyBytes)))) {
       if (item is! Map<String, dynamic>) continue;
       final code = _s(item['BusLineCode'] ?? '');
+      if (code.isEmpty) continue;
       if (_skipKeywords.any((kw) => code.toUpperCase().contains(kw))) continue;
       result.add({
         'BusLineCode':               _s(item['BusLineCode']),
         'BusLineNo':                 _s(item['BusLineNo']),
         'BusLineShortName':          _s(item['BusLineShortName']),
         'panelId':                   item['panelId']?.toString() ?? '',
-        'RemainingTimeCurr':         item['RemainingTimeCurr'] ?? 0,
-        'RemainingTimeNext':         item['RemainingTimeNext'],
-        'IsAccordingToTimeSchedule': item['IsAccordingToTimeSchedule'] ?? false,
+        // ASIS string döner — int'e çevir
+        'RemainingTimeCurr':         int.tryParse(item['RemainingTimeCurr']?.toString() ?? '') ?? 0,
+        'RemainingTimeNext':         int.tryParse(item['RemainingTimeNext']?.toString() ?? '') ?? 0,
+        'IsAccordingToTimeSchedule': _s(item['IsAccordingToTimeSchedule'], 'A'),
         'BusStatusCurr':             _s(item['BusStatusCurr']),
         'BusStatusNext':             _s(item['BusStatusNext']),
-        'distance':                  item['distance'] ?? 0,
-        'RemainingNumberOfBusStops': item['RemainingNumberOfBusStops'] ?? 0,
-        'latitude':                  (item['latitude']  as num?)?.toDouble() ?? 0.0,
-        'longitude':                 (item['longitude'] as num?)?.toDouble() ?? 0.0,
-        'speed':                     item['speed'] ?? 0,
-        'direction':                 item['direction'] ?? 0,
+        'distance':                  int.tryParse(item['distance']?.toString() ?? '') ?? 0,
+        'RemainingNumberOfBusStops': int.tryParse(item['RemainingNumberOfBusStops']?.toString() ?? '') ?? 0,
+        // ASIS string döner — double'a çevir
+        'latitude':                  double.tryParse(item['latitude']?.toString() ?? '') ?? 0.0,
+        'longitude':                 double.tryParse(item['longitude']?.toString() ?? '') ?? 0.0,
+        'speed':                     int.tryParse(item['speed']?.toString() ?? '') ?? 0,
+        'direction':                 int.tryParse(item['direction']?.toString() ?? '') ?? 0,
       });
     }
     return result;
@@ -752,14 +755,42 @@ class ApiService {
   // ═══════════════════════════════════════════════════════════════════
   // Test erişim metodları (@visibleForTesting)
   // ═══════════════════════════════════════════════════════════════════
-  @visibleForTesting
-  static List<dynamic> listForTest(dynamic decoded) => _list(decoded);
 
+  /// _parseVehicles test erişimi — RT araç verilerini parse eder
   @visibleForTesting
-  static List<Map<String, dynamic>> parseVehiclesForTest(
+  static List<Map<String, dynamic>> parseRealTimeDataForTest(
           List<dynamic> data, String lineCode) =>
       _parseVehicles(data, lineCode);
 
+  /// SmartStation verisini temizler: BusLineCode filtresi + skip keywords
   @visibleForTesting
-  static String fixTextForTest(String text) => _fix(text);
+  static List<Map<String, dynamic>> cleanSmartStationDataForTest(
+      List<dynamic> data) {
+    final result = <Map<String, dynamic>>[];
+    for (final item in data) {
+      if (item is! Map<String, dynamic>) continue;
+      final code = _s(item['BusLineCode'] ?? '');
+      if (code.isEmpty) continue;
+      if (_skipKeywords.any((kw) => code.toUpperCase().contains(kw))) continue;
+      result.add(item);
+    }
+    return result;
+  }
+
+  /// ASIS yanıtından liste çıkarır — tekil objeyi de listeye sarar
+  @visibleForTesting
+  static List<dynamic> extractDataListForTest(dynamic decoded) {
+    if (decoded is List) return decoded;
+    if (decoded is Map<String, dynamic>) {
+      final inner = decoded['data'];
+      if (inner is List) return inner;
+      // Tekil obje → listeye sar
+      return [decoded];
+    }
+    return [];
+  }
+
+  /// Türkçe karakter düzeltme test erişimi
+  @visibleForTesting
+  static String fixAndCleanTextForTest(String text) => _fix(text);
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:samsun_ulasim/constants.dart';
-import 'package:samsun_ulasim/services/update_checker.dart';
+import 'package:samsun_ulasim/services/update_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
@@ -129,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Veri Yönetimi
           SettingsSectionWidget(title: 'Veri Yönetimi', children: [
-            _chevronItem(Icons.system_update, Colors.blue, 'Güncelleme Kontrolü', onTap: () => UpdateChecker.check(context, forceCheck: true)),
+            _chevronItem(Icons.system_update, Colors.blue, 'Güncelleme Kontrolü', onTap: () => UpdateService.checkForUpdate(context)),
             _divider(),
             _chevronItem(Icons.refresh, Colors.teal, 'Verileri Yenile', onTap: () => _showDataRefreshDialog(context)),
             _divider(),
