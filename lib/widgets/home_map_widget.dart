@@ -11,6 +11,7 @@ class HomeMapWidget extends StatelessWidget {
   final LatLng? targetLocation;
   final List<LatLng> routePolyline;
   final List<Map<String, dynamic>> activeLineDuraklar;
+  final List<LatLng> activeLineRoadPolyline;
   final List<Map<String, dynamic>> liveVehicles;
   final List<Map<String, dynamic>> duraklar;
   final bool showNearbyOnly;
@@ -31,6 +32,7 @@ class HomeMapWidget extends StatelessWidget {
     this.targetLocation,
     required this.routePolyline,
     required this.activeLineDuraklar,
+    this.activeLineRoadPolyline = const [],
     required this.liveVehicles,
     required this.duraklar,
     required this.showNearbyOnly,
@@ -93,13 +95,15 @@ class HomeMapWidget extends StatelessWidget {
           PolylineLayer(polylines: [
             if (routePolyline.isNotEmpty)
               Polyline(points: routePolyline, strokeWidth: 5.0, color: const Color(0xFF2979FF)),
-            // RT-14: Seçili hattın güzergah polyline'ı
+            // RT-14: Seçili hattın güzergah polyline'ı (yol takip eden)
             if (activeLineDuraklar.isNotEmpty)
               Polyline(
-                points: activeLineDuraklar
-                    .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
-                    .map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()))
-                    .toList(),
+                points: activeLineRoadPolyline.isNotEmpty
+                    ? activeLineRoadPolyline
+                    : activeLineDuraklar
+                        .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
+                        .map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()))
+                        .toList(),
                 strokeWidth: 4.0,
                 color: const Color(0xFF00BFA5),
               ),

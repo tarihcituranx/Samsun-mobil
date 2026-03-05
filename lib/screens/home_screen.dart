@@ -13,6 +13,7 @@ import '../services/api_service.dart';
 import '../services/price_service.dart';
 import '../services/offline_service.dart';
 import '../services/update_service.dart';
+import '../services/route_geometry_service.dart';
 import 'hatlar_screen.dart';
 import 'samair_screen.dart';
 import 'odak_screen.dart';
@@ -35,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _routeResults = [];
   List<Map<String, dynamic>> _liveVehicles = [];
   List<Map<String, dynamic>> _activeLineDuraklar = []; // RT-14: Seçili hattın durakları
+  List<LatLng> _activeLineRoadPolyline = []; // Yol takip eden polyline
 
   bool _isLoadingMap = true;
   bool _isLoadingNearby = false;
@@ -128,7 +130,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _liveTimer?.cancel();
     _activeLineCode = lineCode;
     // RT-15: Önceki durakları temizle, yeni hat durakları yükle
-    setState(() => _activeLineDuraklar = []);
+    setState(() {
+      _activeLineDuraklar = [];
+      _activeLineRoadPolyline = [];
+    });
     _loadActiveLineDuraklar(lineCode);
     _toastInfo("📡 $lineCode hattı canlı takip başlatıldı");
     _fetchLiveVehicles();
@@ -143,10 +148,24 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _activeLineDuraklar = duraklar);
         if (duraklar.isNotEmpty) {
           _toastSuccess("📍 ${duraklar.length} durak haritada gösterildi");
+          // Yol geometrisini arka planda yükle
+          _loadActiveLineRoadPolyline(lineCode, duraklar);
         }
       }
     } catch (e) {
       debugPrint('Hat durak yükleme hatası: $e');
+    }
+  }
+
+  /// Seçili hat için yol takip eden polyline yükle
+  Future<void> _loadActiveLineRoadPolyline(String lineCode, List<Map<String, dynamic>> duraklar) async {
+    try {
+      final polyline = await RouteGeometryService.getRoutePolyline('home_$lineCode', duraklar);
+      if (mounted && polyline.isNotEmpty) {
+        setState(() => _activeLineRoadPolyline = polyline);
+      }
+    } catch (e) {
+      debugPrint('Yol polyline yükleme hatası: $e');
     }
   }
 
@@ -422,6 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
       targetLocation: _targetLocation,
       routePolyline: _routePolyline,
       activeLineDuraklar: _activeLineDuraklar,
+      activeLineRoadPolyline: _activeLineRoadPolyline,
       liveVehicles: _liveVehicles,
       duraklar: _duraklar,
       showNearbyOnly: _showNearbyOnly,

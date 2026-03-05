@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../constants.dart';
 import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
+import '../services/route_geometry_service.dart';
 import '../widgets/hat_list_item_widget.dart';
 
 class HatlarScreen extends StatefulWidget {
@@ -177,7 +179,21 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   Timer? _liveTimer;
   final MapController _mapController = MapController();
 
-  Color get _katColor => (_HatlarScreenState.kategoriler[widget.kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
+  // Ring hatları için gidiş/dönüş yön seçimi
+  bool _ringGidis = true; // true = Gidiş, false = Dönüş
+
+  // Yol takip eden polyline (OSRM)
+  List<LatLng> _roadPolyline = [];
+  bool _isPolylineLoading = false;
+
+  bool get _isRing => widget.kat == 'ring';
+  Color get _ringGidisColor => const Color(0xFF00BFA5); // Yeşil-teal gidiş
+  Color get _ringDonusColor => const Color(0xFFFF9100); // Turuncu dönüş
+
+  Color get _katColor {
+    if (_isRing) return _ringGidis ? _ringGidisColor : _ringDonusColor;
+    return (_HatlarScreenState.kategoriler[widget.kat]?['color'] as Color?) ?? const Color(0xFF2979FF);
+  }
 
   @override
   void initState() { super.initState(); _loadData(); _startLiveTracking(); }
@@ -210,7 +226,26 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
 
         _isLoading = false;
       });
+      // Yol geometrisini arka planda yükle
+      _loadRoadPolyline();
     }
+  }
+
+  /// OSRM ile yol takip eden polyline yükle
+  Future<void> _loadRoadPolyline() async {
+    if (_duraklar.length < 2) return;
+    setState(() => _isPolylineLoading = true);
+    try {
+      final durakList = _isRing && !_ringGidis
+          ? _duraklar.reversed.toList()
+          : _duraklar;
+      final cacheKey = '${widget.code}_${_isRing ? (_ringGidis ? 'G' : 'D') : 'all'}';
+      final polyline = await RouteGeometryService.getRoutePolyline(cacheKey, durakList);
+      if (mounted) setState(() => _roadPolyline = polyline);
+    } catch (e) {
+      debugPrint('Yol polyline hatası: $e');
+    }
+    if (mounted) setState(() => _isPolylineLoading = false);
   }
 
   void _startLiveTracking() {
@@ -238,6 +273,35 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
           : SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _buildSpecialBanner(),
 
+              // Ring hatları için Gidiş/Dönüş switch
+              if (_isRing) Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF152238),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _katColor.withValues(alpha: 0.2)),
+                ),
+                child: Row(children: [
+                  Icon(Icons.swap_horiz, color: _katColor, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(
+                    _ringGidis ? '🟢 Gidiş Yönü' : '🟠 Dönüş Yönü',
+                    style: TextStyle(color: _katColor, fontWeight: FontWeight.bold, fontSize: 14),
+                  )),
+                  Switch(
+                    value: _ringGidis,
+                    activeColor: _ringGidisColor,
+                    inactiveThumbColor: _ringDonusColor,
+                    inactiveTrackColor: _ringDonusColor.withValues(alpha: 0.3),
+                    onChanged: (v) {
+                      setState(() => _ringGidis = v);
+                      _loadRoadPolyline();
+                    },
+                  ),
+                ]),
+              ),
+
               // Fiyat
               if (_fiyat != null) Container(
                 width: double.infinity, margin: const EdgeInsets.all(12), padding: const EdgeInsets.all(16),
@@ -252,6 +316,10 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                   Text("İndirimli: ₺${(_fiyat!['indirimli_fiyat'] ?? '--')}", style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
                 ]),
               ),
+
+              // Aktarma ve İade Kuralları
+              if (widget.kat == 'otobus' || widget.kat == 'tramvay' || widget.kat == 'ekspres' || widget.kat == 'ring')
+                _buildAktarmaInfo(),
 
               // Info Kartları
               Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Row(children: [
@@ -286,7 +354,9 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                       userAgentPackageName: 'com.samsun.transit',
                     ),
                     PolylineLayer(polylines: [Polyline(
-                      points: _duraklar.where((d) => (d['lat'] as num?)?.toDouble() != null).map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble())).toList(),
+                      points: _roadPolyline.isNotEmpty
+                          ? _roadPolyline
+                          : _duraklar.where((d) => (d['lat'] as num?)?.toDouble() != null).map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble())).toList(),
                       strokeWidth: 4.0, color: _katColor,
                     )]),
                     MarkerLayer(markers: [
@@ -379,8 +449,18 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
               ],
 
               // Durak Listesi
-              Padding(padding: const EdgeInsets.all(12), child: Text("📍 Duraklar (${_duraklar.length})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withValues(alpha: 0.9)))),
-              ..._duraklar.asMap().entries.map((entry) {
+              Padding(padding: const EdgeInsets.all(12), child: Text(
+                _isRing
+                    ? "📍 Duraklar (${_duraklar.length}) — ${_ringGidis ? 'Gidiş' : 'Dönüş'}"
+                    : "📍 Duraklar (${_duraklar.length})",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white.withValues(alpha: 0.9)),
+              )),
+              ...() {
+                // Ring dönüş yönünde durakları ters sırala
+                final displayDuraklar = _isRing && !_ringGidis
+                    ? _duraklar.reversed.toList()
+                    : _duraklar;
+                return displayDuraklar.asMap().entries.map((entry) {
                 final i = entry.key;
                 final d = entry.value;
                 
@@ -432,10 +512,46 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
                     dense: true,
                   ),
                 );
-              }),
+              });
+              }(),
               const SizedBox(height: 20),
             ])),
     );
+  }
+
+  Widget _buildAktarmaInfo() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF152238),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2979FF).withValues(alpha: 0.15)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          leading: const Icon(Icons.swap_horiz, color: Color(0xFF2979FF), size: 20),
+          title: const Text('Aktarma & İade Kuralları', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          iconColor: Colors.white54,
+          collapsedIconColor: Colors.white38,
+          children: [
+            _aktarmaSection('🔄 Aktarma Kuralları', aktarmaKurallariMetni),
+            const SizedBox(height: 10),
+            _aktarmaSection('💳 İade Kuralları', iadeKurallariMetni),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _aktarmaSection(String title, String body) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: const TextStyle(color: Color(0xFF2979FF), fontWeight: FontWeight.bold, fontSize: 12)),
+      const SizedBox(height: 6),
+      Text(body, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11, height: 1.5)),
+    ]);
   }
 
   Widget _infoCard(String label, String value, IconData icon) {

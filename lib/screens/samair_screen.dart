@@ -24,6 +24,23 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
   // Çarşamba Havaalanı Konumu
   final LatLng _airportLocation = const LatLng(41.2589, 36.5564);
 
+  // SamAir hat isim eşleştirmesi
+  static const Map<String, String> _lineNames = {
+    'H1': 'H1 OMÜ-İlkadım',
+    'H2': 'H2 TTTM-Canik',
+    'H3': 'H3 Bafra-19 Mayıs',
+    'H4': 'H4 Çarşamba-Salıpazarı',
+    'H5': 'H5',
+  };
+
+  String _getLineName(String lineCode) {
+    // Hat kodunu bul — tam eşleşme veya içerme
+    for (final entry in _lineNames.entries) {
+      if (lineCode.toUpperCase().contains(entry.key)) return entry.value;
+    }
+    return lineCode.isNotEmpty ? lineCode : 'SamAir';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -158,10 +175,11 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                   final hizi = (b['speed'] ?? b['hiz'] ?? b['Hizi'] ?? '0').toString();
                   final plaka = (b['plate'] ?? b['plaka'] ?? b['Plaka'] ?? 'SAMAIR').toString();
                   final hatKodu = (b['lineCode'] ?? b['HatKodu'] ?? '').toString();
+                  final hatAdi = _getLineName(hatKodu);
                   
                   return Marker(
                     point: LatLng(lat, lon),
-                    width: 45, height: 45,
+                    width: 50, height: 50,
                     child: GestureDetector(
                       onTap: () => _showSamairDetail(context, b, plaka, hizi, hatKodu),
                       child: Container(
@@ -173,8 +191,8 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                         ),
                         child: Center(
                           child: Text(
-                            plaka.length > 3 ? plaka.substring(plaka.length - 4) : plaka,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white),
+                            hatKodu.isNotEmpty ? hatKodu : 'SA',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white),
                           ),
                         ),
                       ),
@@ -217,7 +235,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                 children: [
                   Row(
                     children: [
-                      Image.asset('assets/samair.png', width: 44, height: 44, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const Icon(Icons.flight_takeoff, color: Color(0xFF2979FF), size: 32)),
+                      Image.asset('assets/samair.png', width: 56, height: 56, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const Icon(Icons.flight_takeoff, color: Color(0xFF2979FF), size: 40)),
                       const SizedBox(width: 8),
                       const Text("Canlı", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                       const Spacer(),
@@ -242,6 +260,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                           final plaka = (b['plate'] ?? b['plaka'] ?? b['Plaka'] ?? '?').toString();
                           final hizi = (b['speed'] ?? b['hiz'] ?? b['Hizi'] ?? '0').toString();
                           final hatKodu = (b['lineCode'] ?? b['HatKodu'] ?? '').toString();
+                          final hatAdi = _getLineName(hatKodu);
                           return Padding(
                             padding: const EdgeInsets.only(right: 8.0),
                             child: GestureDetector(
@@ -252,7 +271,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
                                   radius: 20,
                                   child: const Icon(Icons.flight_takeoff, color: Colors.white70),
                                 ),
-                                label: Text("$plaka - $hizi km/s", style: const TextStyle(color: Colors.white, fontSize: 11)),
+                                label: Text("$hatAdi - $hizi km/s", style: const TextStyle(color: Colors.white, fontSize: 11)),
                                 backgroundColor: const Color(0xFF2979FF),
                                 side: BorderSide.none,
                               ),
