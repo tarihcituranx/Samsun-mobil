@@ -46,20 +46,43 @@ BUILD_TAG=""
 log() {
   local level="$1"; shift
   local msg="$*"
-  local ts=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[$ts] [$level] $msg" >> "$STEP_LOG"
+  local ts
+  ts=$(date +"%Y-%m-%d %H:%M:%S")
+  # LOG_FILE henüz set edilmemişse geçici dosyaya yaz
+  local target="${LOG_FILE:-$STEP_LOG}"
+  echo "[$ts] [$level] $msg" >> "$target"
   case "$level" in
     INFO)  info    "$msg" ;;
     OK)    success "$msg" ;;
     WARN)  warn    "$msg" ;;
-    ERROR) echo -e "${RED}❌ $msg${NC}"; exit 1 ;;
+    ERROR)
+      echo -e "${RED}❌ $msg${NC}"
+      # trap'ın da çalışmaması için ERR sinyalini geçici olarak kapat
+      trap - ERR
+      exit 1
+      ;;
   esac
+}
+
+# ── JSON güvenli string dönüştürücü ───────────────────────
+# Çift tırnak, ters eğik çizgi ve satır sonlarını kaçırır
+json_escape() {
+  local str="$1"
+  # Önce \ sonra " sonra kontrol karakterlerini işle
+  str="${str//\\/\\\\}"
+  str="${str//\"/\\\"}"
+  str="${str//$'\n'/\\n}"
+  str="${str//$'\r'/}"
+  str="${str//$'\t'/\\t}"
+  echo "$str"
 }
 
 # ── Hata yakalayıcı ───────────────────────────────────────
 on_error() {
   local exit_code=$? line_no=$1
-  local ts=$(date +"%Y-%m-%d %H:%M:%S")
+  local ts
+  ts=$(date +"%Y-%m-%d %H:%M:%S")
+  local log_target="${LOG_FILE:-$STEP_LOG}"
   local err_file="$LOG_DIR/ERROR_${BUILD_TAG:-unknown}_${BUILD_START}.log"
   {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -69,10 +92,10 @@ on_error() {
     echo "  Exit kodu : $exit_code"
     echo "  Satır no  : $line_no"
     echo "  Flutter   : $(flutter --version 2>/dev/null | head -1 || echo 'bulunamadı')"
-    echo "  Disk      : $(df -h $HOME | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
+    echo "  Disk      : $(df -h "$HOME" | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
     echo ""
     echo "  Son 40 satır:"
-    tail -40 "$STEP_LOG" 2>/dev/null || true
+    tail -40 "$log_target" 2>/dev/null || true
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   } > "$err_file"
   echo -e "${RED}╔══════════════════════════════════════════╗${NC}"
@@ -87,31 +110,37 @@ cleanup_disk() {
   local reason="$1"; local freed=0
   log INFO "🧹 Disk temizliği ($reason)..."
   if [ -d "$HOME/.gradle/caches" ]; then
-    local s=$(du -sm "$HOME/.gradle/caches" 2>/dev/null | cut -f1)
+    local s
+    s=$(du -sm "$HOME/.gradle/caches" 2>/dev/null | cut -f1)
     rm -rf "$HOME/.gradle/caches"; freed=$((freed+s))
     log OK "Gradle cache silindi (~${s}MB)"
   fi
   if [ -d "$PROJECT_DIR/build" ]; then
-    local s=$(du -sm "$PROJECT_DIR/build" 2>/dev/null | cut -f1)
+    local s
+    s=$(du -sm "$PROJECT_DIR/build" 2>/dev/null | cut -f1)
     flutter clean --suppress-analytics 2>/dev/null || rm -rf "$PROJECT_DIR/build"
     freed=$((freed+s)); log OK "Flutter build temizlendi (~${s}MB)"
   fi
   rm -rf /tmp/cmdtools* /tmp/gradle* /tmp/flutter* /tmp/dart* /tmp/*.zip /tmp/*.apk 2>/dev/null || true
   if [ -d "$HOME/.pub-cache/hosted" ]; then
-    local s=$(du -sm "$HOME/.pub-cache/hosted" 2>/dev/null | cut -f1)
+    local s
+    s=$(du -sm "$HOME/.pub-cache/hosted" 2>/dev/null | cut -f1)
     rm -rf "$HOME/.pub-cache/hosted"; freed=$((freed+s))
     log OK "Pub cache temizlendi (~${s}MB)"
   fi
   rm -rf "$HOME/.android/cache" 2>/dev/null || true
   ls -1t "$LOG_DIR"/*.log 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
-  local free_after=$(df -k $HOME | awk 'NR==2 {print int($4/1024)}')
+  local free_after
+  free_after=$(df -k "$HOME" | awk 'NR==2 {print int($4/1024)}')
   log OK "Temizlik bitti — Boş: ${free_after}MB (~${freed}MB kazanıldı)"
 }
 
 check_disk() {
   local min_mb="${1:-1500}"
-  local free_mb=$(df -k $HOME | awk 'NR==2 {print int($4/1024)}')
-  local used_pct=$(df $HOME | awk 'NR==2 {print int($5)}')
+  local free_mb
+  free_mb=$(df -k "$HOME" | awk 'NR==2 {print int($4/1024)}')
+  local used_pct
+  used_pct=$(df "$HOME" | awk 'NR==2 {print int($5)}')
   log INFO "Disk: ${free_mb}MB boş (%${used_pct} dolu)"
   [ "$free_mb" -lt "$min_mb" ] && { log WARN "Yetersiz disk — temizlik"; cleanup_disk "low_disk"; } || true
 }
@@ -129,19 +158,20 @@ setup_git_auth() {
 fix_dependencies() {
   log INFO "Bağımlılıklar kontrol ediliyor..."
   local fix_script="$SCRIPTS_DIR/fix_deps.py"
+  local log_target="${LOG_FILE:-$STEP_LOG}"
 
   if [ -f "$fix_script" ]; then
-    python3 "$fix_script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
-    local exit_code=${PIPESTATUS[0]}
-    if [ $exit_code -ne 0 ]; then
+    python3 "$fix_script" "$PROJECT_DIR" 2>&1 | tee -a "$log_target"
+    local exit_code="${PIPESTATUS[0]}"
+    if [ "$exit_code" -ne 0 ]; then
       log ERROR "Bağımlılık sorunu çözülemedi! pubspec.yaml'ı manuel kontrol et."
     fi
     log OK "Bağımlılıklar hazır"
   else
     log WARN "fix_deps.py bulunamadı, doğrudan flutter pub get deneniyor..."
-    if ! flutter pub get 2>&1 | tee -a "$LOG_FILE"; then
+    if ! flutter pub get 2>&1 | tee -a "$log_target"; then
       log WARN "flutter pub get başarısız, upgrade deneniyor..."
-      flutter pub upgrade --major-versions 2>&1 | tee -a "$LOG_FILE" || \
+      flutter pub upgrade --major-versions 2>&1 | tee -a "$log_target" || \
         log ERROR "Bağımlılık sorunu çözülemedi!"
     fi
   fi
@@ -150,9 +180,10 @@ fix_dependencies() {
 # ── Opsiyonel script çalıştırıcı ─────────────────────────
 run_optional() {
   local script="$1"
+  local log_target="${LOG_FILE:-$STEP_LOG}"
   if [ -f "$SCRIPTS_DIR/$script" ]; then
     log INFO "$script çalıştırılıyor..."
-    bash "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
+    bash "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$log_target"
     log OK "$script tamamlandı"
   else
     log WARN "$script bulunamadı, atlanıyor"
@@ -161,9 +192,10 @@ run_optional() {
 
 run_optional_py() {
   local script="$1"
+  local log_target="${LOG_FILE:-$STEP_LOG}"
   if [ -f "$SCRIPTS_DIR/$script" ]; then
     log INFO "$script çalıştırılıyor..."
-    python3 "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$LOG_FILE"
+    python3 "$SCRIPTS_DIR/$script" "$PROJECT_DIR" 2>&1 | tee -a "$log_target"
     log OK "$script tamamlandı"
   else
     log WARN "$script bulunamadı, atlanıyor"
@@ -202,7 +234,8 @@ log INFO "Sürüm tespit ediliyor..."
 CURRENT_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}' | tr -d '\r')
 VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
 VERSION_CODE=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
-[ -z "$VERSION_NAME" ] && VERSION_NAME="1.0.0" && VERSION_CODE="1"
+[ -z "$VERSION_NAME" ] && VERSION_NAME="1.0.0"
+[ -z "$VERSION_CODE" ] && VERSION_CODE="1"
 
 NEW_CODE=$((VERSION_CODE + 1))
 DATE=$(date +"%Y%m%d_%H%M")
@@ -218,11 +251,12 @@ LOG_FILE="$LOG_DIR/build_${BUILD_TAG}_${BUILD_START}.log"
   echo "  Başlangıç: $(date '+%d.%m.%Y %H:%M:%S')"
   echo "  CI       : $IS_CI"
   echo "  Flutter  : $(flutter --version 2>/dev/null | head -1 || echo 'N/A')"
-  echo "  Disk     : $(df -h $HOME | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
+  echo "  Disk     : $(df -h "$HOME" | awk 'NR==2{print $3"/"$2" ("$5" dolu)"}')"
   echo "════════════════════════════════════════════════"
 } > "$LOG_FILE"
+# Geçici log içeriğini kalıcı log dosyasına taşı ve geçiciyi sil
 cat "$STEP_LOG" >> "$LOG_FILE"
-STEP_LOG="$LOG_FILE"
+rm -f "$STEP_LOG"
 
 log INFO "Mevcut sürüm : $VERSION_NAME+$VERSION_CODE"
 log INFO "Yeni build   : $BUILD_TAG"
@@ -250,6 +284,10 @@ else
 fi
 [ -z "$RELEASE_NOTES" ] && RELEASE_NOTES="- Çeşitli iyileştirmeler ve hata düzeltmeleri."
 echo "$RELEASE_NOTES" >> "$LOG_FILE"
+
+# JSON'a gömülecek alanları güvenli hale getir
+CHANGELOG_SAFE=$(json_escape "$CHANGELOG")
+RELEASE_NOTES_SAFE=$(json_escape "$RELEASE_NOTES")
 
 # ── 5. Disk kontrolü ──────────────────────────────────────
 cleanup_disk "pre_build"
@@ -295,7 +333,8 @@ cp "$APK_SOURCE" "releases/latest/$APK_FINAL_NAME"
 
 # ── 9. Eski APK temizle ───────────────────────────────────
 log INFO "Eski APK'lar temizleniyor (son $MAX_APK_KEEP)..."
-RELEASE_DIRS=($(ls -dt releases/v* 2>/dev/null || true))
+# ls yerine glob + mapfile kullan (boşluklu isim güvenliği)
+mapfile -t RELEASE_DIRS < <(ls -dt releases/v* 2>/dev/null || true)
 TOTAL=${#RELEASE_DIRS[@]}
 if [ "$TOTAL" -gt "$MAX_APK_KEEP" ]; then
   for i in $(seq "$MAX_APK_KEEP" $((TOTAL - 1))); do
@@ -314,8 +353,8 @@ cat > releases/version.json << JSON
   "buildTag": "${BUILD_TAG}",
   "apkUrl": "${APK_DOWNLOAD_URL}",
   "releaseDate": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "changelog": "${CHANGELOG}",
-  "releaseNotes": "${RELEASE_NOTES}",
+  "changelog": "${CHANGELOG_SAFE}",
+  "releaseNotes": "${RELEASE_NOTES_SAFE}",
   "buildDuration": "${BUILD_DURATION}s",
   "apkSize": "${APK_SIZE}",
   "minSupportedVersion": "1.0.0",
@@ -349,10 +388,11 @@ run_optional_py "brain_update.py"  # PROJECT_BRAIN.md güncelleyici
 # ── 13b. Bug raporu varsa logs/ klasörüne kopyala ─────────
 if ls /home/runner/bug_report_*.md 1>/dev/null 2>&1; then
   cp /home/runner/bug_report_*.md "$LOG_DIR/" 2>/dev/null || true
-  log OK "Bug raporu logs/ klasörüne kopyalandı"
+  log OK "Bug raporu logs/ klasörüne kopyalandı (/home/runner)"
 fi
 if ls "$PROJECT_DIR"/bug_report_*.md 1>/dev/null 2>&1; then
   cp "$PROJECT_DIR"/bug_report_*.md "$LOG_DIR/" 2>/dev/null || true
+  log OK "Bug raporu logs/ klasörüne kopyalandı (PROJECT_DIR)"
 fi
 
 # ── 14. Log kapanış ───────────────────────────────────────
@@ -383,7 +423,7 @@ echo -e "🔗 İndir    : ${CYAN}${APK_DOWNLOAD_URL}${NC}"
 echo -e "📋 Log      : ${CYAN}${LOG_FILE}${NC}"
 echo ""
 echo -e "${BLUE}── Son Build Logları ──────────────────────${NC}"
-ls -1t "$LOG_DIR"/*.log 2>/dev/null | head -5 | while read f; do
+ls -1t "$LOG_DIR"/*.log 2>/dev/null | head -5 | while read -r f; do
   SIZE=$(du -sh "$f" | cut -f1)
   NAME=$(basename "$f")
   if [[ "$NAME" == ERROR_* ]]; then
