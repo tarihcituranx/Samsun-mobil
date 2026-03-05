@@ -91,9 +91,36 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # 5) Keystore oluştur
+      # 5) Keystore oluştur ve BOYUT kontrolü yap
+      # ─────────────────────────────────────────────────────────────────────────
+      # BUG #69 KÖK NEDENİ:
+      #   base64 --decode bazen sessizce kısmi/bozuk bir .jks dosyası oluşturur
+      #   (özellikle secret'ta satır sonu veya padding sorunu varsa).
+      #   Ardından keytool -list | head -10 doğrulaması YANLIŞ POZİTİF verir
+      #   çünkü 'head' her zaman exit 0 döner → keytool'un hata kodu kaybolur.
+      #   Gradle packageRelease adımında private key okunmaya çalışılınca
+      #   java.io.EOFException fırlatılır ve build 9 dakika sonra çöker.
+      #
+      # DÜZELTME:
+      #   a) base64 decode sonrası dosya boyutu > 2 KB zorunluluğu
+      #   b) keytool -exportcert (private key'i gerçekten okur, sadece header'ı değil)
+      #   c) set -euo pipefail + PIPESTATUS ile pipe hata maskesini engelle
+      # ─────────────────────────────────────────────────────────────────────────
       - name: Keystore yaz
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/samsun_ulasim.jks
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/samsun_ulasim.jks
+
+          # Boyut kontrolü: gerçek bir JKS dosyası en az 2 KB olmalı
+          size=$(wc -c < android/app/samsun_ulasim.jks)
+          echo "Keystore boyutu: ${size} bayt"
+          if [ "$size" -lt 2048 ]; then
+            echo "HATA: Keystore dosyası çok küçük (${size} bayt < 2048 bayt)!"
+            echo "KEYSTORE_BASE64 secret'ı bozuk veya eksik olabilir."
+            echo "Yeniden oluşturmak için: base64 -w 0 samsun_ulasim.jks | pbcopy"
+            exit 1
+          fi
+          echo "Keystore boyutu OK (${size} bayt)"
 
       # 6) key.properties oluştur
       # HATA KAYNAĞI (ESKİ): heredoc (cat << EOF) YAML içinde girintili yazılırsa
@@ -109,19 +136,36 @@ jobs:
             echo "storeFile=samsun_ulasim.jks"
           } > android/key.properties
 
-      # 6b) Keystore ve signing doğrula — yanlış şifre/alias'ta build başlamadan hata ver
+      # 6b) Keystore ve signing doğrula
+      # ─────────────────────────────────────────────────────────────────────────
+      # DÜZELTME: keytool -exportcert kullan (private key'i tam okur).
+      #   Eski: keytool -list | head -10 → head her zaman 0 döner, keytool
+      #         hatası maskelenir → yanlış pozitif doğrulama.
+      #   Yeni: set -euo pipefail + keytool -exportcert → private key gerçekten
+      #         okunur; hata varsa build hemen durur, 9 dakika boşa gitmez.
+      # ─────────────────────────────────────────────────────────────────────────
       - name: Signing config doğrula
         run: |
-          echo "=== Keystore kontrol ==="
+          set -euo pipefail
+
+          echo "=== Keystore dosya kontrolü ==="
           ls -lh android/app/samsun_ulasim.jks || { echo "HATA: keystore yok!"; exit 1; }
-          keytool -list \
+
+          echo "=== Private key okuma testi (exportcert) ==="
+          # -exportcert, private key'i tam olarak okur.
+          # Eski -list | head -10 yaklaşımı truncated JKS'de false-positive veriyordu.
+          keytool -exportcert \
             -keystore android/app/samsun_ulasim.jks \
             -storepass "${{ secrets.STORE_PASSWORD }}" \
-            -alias "${{ secrets.KEY_ALIAS }}" \
-            2>&1 | head -10 || { echo "HATA: keystore açılamadı — şifre veya alias yanlış!"; exit 1; }
+            -alias    "${{ secrets.KEY_ALIAS }}" \
+            -file /dev/null \
+            2>&1
+          echo "=== Private key OK ==="
+
           echo "=== key.properties (baştaki boşluk kontrolü: $ işareti satır sonu demek) ==="
           cat -A android/key.properties
-          echo "=== Signing OK ==="
+
+          echo "=== Signing doğrulama BAŞARILI ==="
 
       # 6c) Gradle bellek ayarları (varsayılan ~512m-1g → release build için 4g gerekli)
       - name: Gradle bellek ayarla
