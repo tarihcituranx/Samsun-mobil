@@ -31,18 +31,30 @@ class PriceService {
       debugPrint("Dinamik fiyat çekme hatası: $e");
     }
 
-    // Fallback Fiyatlar (Sunucuya ulaşılamazsa)
+    // Fallback Fiyatlar (Sunucuya ulaşılamazsa) — Güncel: Mart 2026
     return _cachedPrices ?? {
-      "default": {"tam": 20.0, "indirimli": 14.0},
-      "tramvay": {"tam": 30.0, "indirimli": 19.0},
-      "teleferik": {"tam": 30.0, "indirimli": 18.0},
-      "ekspres": {"tam": 27.0, "indirimli": 17.0},
-      "ring": {"tam": 20.0, "indirimli": 14.0},
-      "SAMSUNUM-1": {"tam": 225.0, "indirimli": 170.0},
-      "ALTINKAYA": {"tam": 18.0, "indirimli": 8.0, "arac": 85.0},
+      "default": {"tam": 30.0, "indirimli": 20.0},
+      "otobus": {"tam": 30.0, "indirimli": 20.0},
+      "tramvay_1_24": {"tam": 26.0, "indirimli": 18.0},
+      "tramvay_1_42": {"tam": 34.0, "indirimli": 20.0},
+      "tramvay_kampus": {"tam": 5.0, "indirimli": 3.0},
+      "tramvay": {"tam": 26.0, "indirimli": 18.0},
+      "teleferik": {"tam": 50.0, "indirimli": 30.0},
+      "ekspres": {"tam": 30.0, "indirimli": 20.0},
+      "ring": {"tam": 22.0, "indirimli": 16.0},
+      "SAMSUNUM-1": {"tam": 250.0, "indirimli": 200.0},
+      "SAMSUNUM-2": {"tam": 250.0, "indirimli": 200.0},
+      "SAMSUNUM-3": {"tam": 250.0, "indirimli": 200.0},
+      "tekne": {"tam": 250.0, "indirimli": 200.0},
       "havalimani": {"tam": 140.0, "indirimli": 70.0},
       "odak": {"tam": 280.0, "indirimli": 225.0},
-      "ilce": {"tam": 70.0, "indirimli": 35.0}
+      "ilce": {"tam": 70.0, "indirimli": 35.0},
+      "aktarma": {"tam": 8.0, "indirimli": 8.0},
+      "samkart": {"tam_kart": 110.0, "kisisel": 120.0, "vizeleme": 70.0, "kayip": 150.0},
+      "abonman_ogrenci_50": {"tam": 500.0, "binis_basina": 10.0},
+      "abonman_ogrenci_sinirsiz": {"tam": 550.0},
+      "abonman_sivil_50": {"tam": 1000.0, "binis_basina": 20.0},
+      "abonman_sivil_sinirsiz": {"tam": 1100.0}
     };
   }
 

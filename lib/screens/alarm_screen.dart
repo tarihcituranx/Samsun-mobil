@@ -61,7 +61,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                 style: const TextStyle(fontSize: 22, color: Colors.blue, fontWeight: FontWeight.bold),
               ),
               onTap: () => _selectTime(context),
-              tileColor: Colors.grey.withOpacity(0.1),
+              tileColor: Colors.grey.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             const SizedBox(height: 20),

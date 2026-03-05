@@ -28,6 +28,10 @@ jobs:
           cache: true
           cache-key: flutter-stable-${{ runner.os }}
 
+      # 2b) Android lisanslarını kabul et
+      - name: Android lisanslarını kabul et
+        run: yes | flutter doctor --android-licenses || true
+
       # 3) Pub cache
       - name: Pub cache
         uses: actions/cache@v4

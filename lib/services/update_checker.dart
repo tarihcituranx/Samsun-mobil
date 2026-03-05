@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 
 // ── Ayarlar ──────────────────────────────────────────────
-const String VERSION_JSON_URL =
+const String versionJsonUrl =
     'https://github.com/tarihcituranx/test/raw/main/releases/version.json';
 
 // ─────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ class UpdateChecker {
     try {
       // Sunucudaki version.json'ı çek
       final response = await http
-          .get(Uri.parse(VERSION_JSON_URL))
+          .get(Uri.parse(versionJsonUrl))
           .timeout(const Duration(seconds: 8));
 
       if (response.statusCode != 200) return;

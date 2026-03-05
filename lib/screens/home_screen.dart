@@ -13,10 +13,12 @@ import '../services/api_service.dart';
 import '../services/price_service.dart';
 import '../services/offline_service.dart';
 import '../services/update_service.dart';
+import '../services/route_geometry_service.dart';
 import 'hatlar_screen.dart';
 import 'samair_screen.dart';
 import 'odak_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/home_map_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _routeResults = [];
   List<Map<String, dynamic>> _liveVehicles = [];
   List<Map<String, dynamic>> _activeLineDuraklar = []; // RT-14: Seçili hattın durakları
+  List<LatLng> _activeLineRoadPolyline = []; // Yol takip eden polyline
 
   bool _isLoadingMap = true;
   bool _isLoadingNearby = false;
@@ -127,7 +130,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _liveTimer?.cancel();
     _activeLineCode = lineCode;
     // RT-15: Önceki durakları temizle, yeni hat durakları yükle
-    setState(() => _activeLineDuraklar = []);
+    setState(() {
+      _activeLineDuraklar = [];
+      _activeLineRoadPolyline = [];
+    });
     _loadActiveLineDuraklar(lineCode);
     _toastInfo("📡 $lineCode hattı canlı takip başlatıldı");
     _fetchLiveVehicles();
@@ -142,10 +148,24 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _activeLineDuraklar = duraklar);
         if (duraklar.isNotEmpty) {
           _toastSuccess("📍 ${duraklar.length} durak haritada gösterildi");
+          // Yol geometrisini arka planda yükle
+          _loadActiveLineRoadPolyline(lineCode, duraklar);
         }
       }
     } catch (e) {
       debugPrint('Hat durak yükleme hatası: $e');
+    }
+  }
+
+  /// Seçili hat için yol takip eden polyline yükle
+  Future<void> _loadActiveLineRoadPolyline(String lineCode, List<Map<String, dynamic>> duraklar) async {
+    try {
+      final polyline = await RouteGeometryService.getRoutePolyline('home_$lineCode', duraklar);
+      if (mounted && polyline.isNotEmpty) {
+        setState(() => _activeLineRoadPolyline = polyline);
+      }
+    } catch (e) {
+      debugPrint('Yol polyline yükleme hatası: $e');
     }
   }
 
@@ -345,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     leading: Icon(isDirect ? Icons.directions_bus : Icons.transfer_within_a_station, color: Colors.white),
                     title: Text(isDirect ? "Direkt Hat" : "Aktarmalı Rota", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(r['desc'] ?? '', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8))),
+                      Text(r['desc'] ?? '', style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
                       const SizedBox(height: 4),
                       Text('💰 $tamFiyat ₺', style: const TextStyle(color: Color(0xFF69F0AE), fontWeight: FontWeight.bold, fontSize: 13)),
                     ]),
@@ -414,342 +434,27 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── EKRANLAR ───
 
   Widget _buildMapScreen() {
-    if (_isLoadingMap) {
-      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 3, color: const Color(0xFF2979FF).withOpacity(0.7))),
-        const SizedBox(height: 20),
-        Text("Duraklar yükleniyor...", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14)),
-      ]));
-    }
-    return Stack(children: [
-      FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: _myLocation,
-          initialZoom: 13.0,
-          onLongPress: (tapPos, latLng) {
-            setState(() => _targetLocation = latLng);
-            _toastInfo("🎯 Hedef seçildi: ${latLng.latitude.toStringAsFixed(4)}, ${latLng.longitude.toStringAsFixed(4)}");
-            showDialog(context: context, builder: (_) => AlertDialog(
-              backgroundColor: const Color(0xFF1A2940),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text("🎯 Hedef Seçildi", style: TextStyle(color: Colors.white)),
-              content: Text("Bu konuma nasıl giderim?", style: TextStyle(color: Colors.white.withOpacity(0.7))),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text("İptal", style: TextStyle(color: Colors.white.withOpacity(0.5)))),
-                ElevatedButton(
-                  onPressed: () { Navigator.pop(context); _calculateRouteFromCoords(latLng.latitude, latLng.longitude); },
-                  child: const Text("Rota Hesapla"),
-                ),
-              ],
-            ));
-          },
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-            subdomains: const ['a', 'b', 'c', 'd'],
-            userAgentPackageName: 'com.samsun.transit',
-          ),
-          // Teleferik Hattı Polyline (Batıpark ↔ Amisos Tepesi)
-          PolylineLayer(polylines: [
-            if (_routePolyline.isNotEmpty)
-              Polyline(points: _routePolyline, strokeWidth: 5.0, color: const Color(0xFF2979FF)),
-            // RT-14: Seçili hattın güzergah polyline'ı
-            if (_activeLineDuraklar.isNotEmpty)
-              Polyline(
-                points: _activeLineDuraklar
-                    .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
-                    .map((d) => LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()))
-                    .toList(),
-                strokeWidth: 4.0,
-                color: const Color(0xFF00BFA5),
-              ),
-            Polyline(
-              points: const [
-                LatLng(41.321695, 36.323563), // Batıpark (alt istasyon)
-                LatLng(41.318939, 36.322455), // Amisos Tepesi (üst istasyon)
-              ],
-              strokeWidth: 3.5,
-              color: const Color(0xFFFF4081),
-              isDotted: true,
-            ),
-          ]),
-          MarkerLayer(markers: [
-            // Benim konumum
-            Marker(point: _myLocation, width: 40, height: 40, child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF2979FF),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.4), blurRadius: 12, spreadRadius: 3)],
-              ),
-              child: const Center(child: Icon(Icons.person, color: Colors.white, size: 18)),
-            )),
-            // Hedef
-            if (_targetLocation != null)
-              Marker(point: _targetLocation!, width: 40, height: 40, child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.red.shade600,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.4), blurRadius: 12, spreadRadius: 3)],
-                ),
-                child: const Center(child: Icon(Icons.flag, color: Colors.white, size: 18)),
-              )),
-            // RT-14/RT-16: Seçili hattın durak marker'ları (tıklanınca durak adı gösterilsin)
-            ..._activeLineDuraklar
-                .where((d) => (d['lat'] as num?)?.toDouble() != null && (d['lat'] as num).toDouble() > 0)
-                .map((d) {
-              final sira = (d['sira'] as num?)?.toInt() ?? 0;
-              final ad = d['ad']?.toString() ?? 'Durak $sira';
-              return Marker(
-                point: LatLng((d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()),
-                width: 24, height: 24,
-                child: GestureDetector(
-                  onTap: () {
-                    // RT-16: Durak bilgisi göster
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('📍 $sira. $ad', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        duration: const Duration(seconds: 2),
-                        backgroundColor: const Color(0xFF00695C),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00BFA5),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    child: Center(child: Text('$sira', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold))),
-                  ),
-                ),
-              );
-            }),
-            ..._liveVehicles.map((v) => Marker(
-              point: LatLng(v['lat'] as double, v['lon'] as double),
-              width: 38, height: 38,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF2979FF), width: 1.5),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
-                ),
-                child: Center(
-                  child: ClipOval(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Image.asset(
-                        'assets/bus.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.directions_bus, color: Color(0xFF2979FF), size: 20),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )).toList(),
-            // Teleferik İstasyonları
-            Marker(
-              point: const LatLng(41.321695, 36.323563), width: 40, height: 40,
-              child: Tooltip(
-                message: 'Batıpark (Teleferik Alt İstasyon)',
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF4081),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withOpacity(0.4), blurRadius: 8, spreadRadius: 2)],
-                  ),
-                  child: const Center(child: Icon(Icons.airline_seat_recline_extra, color: Colors.white, size: 18)),
-                ),
-              ),
-            ),
-            Marker(
-              point: const LatLng(41.318939, 36.322455), width: 40, height: 40,
-              child: Tooltip(
-                message: 'Amisos Tepesi (Teleferik Üst İstasyon)',
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF4081),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [BoxShadow(color: const Color(0xFFFF4081).withOpacity(0.4), blurRadius: 8, spreadRadius: 2)],
-                  ),
-                  child: const Center(child: Icon(Icons.terrain, color: Colors.white, size: 18)),
-                ),
-              ),
-            ),
-            // Duraklar (en yakın 300 veya sadece yakın)
-            ...() {
-              var sorted = List<Map<String, dynamic>>.from(_duraklar);
-              sorted.sort((a, b) {
-                double da = _hav(_myLocation.latitude, _myLocation.longitude, (a['lat'] as num).toDouble(), (a['lon'] as num).toDouble());
-                double db = _hav(_myLocation.latitude, _myLocation.longitude, (b['lat'] as num).toDouble(), (b['lon'] as num).toDouble());
-                return da.compareTo(db);
-              });
-              final filtered = _showNearbyOnly
-                  ? sorted.where((d) => _hav(_myLocation.latitude, _myLocation.longitude, (d['lat'] as num).toDouble(), (d['lon'] as num).toDouble()) < 1.0)
-                  : sorted.take(300);
-              return filtered.map((d) {
-                double lat = (d['lat'] as num).toDouble();
-                double lon = (d['lon'] as num).toDouble();
-                if (_showNearbyOnly) {
-                  return Marker(
-                    point: LatLng(lat, lon),
-                    width: 100, height: 45,
-                    child: GestureDetector(
-                      onTap: () => _showDurakSheet(d),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 28, height: 28,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2979FF),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.3), blurRadius: 4, spreadRadius: 1)],
-                            ),
-                            child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 14)),
-                          ),
-                          Text(d['ad'] ?? '', style: const TextStyle(color: Colors.black87, fontSize: 10, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 3, color: Colors.white, offset: Offset(0, 0)), Shadow(blurRadius: 6, color: Colors.white, offset: Offset(0, 0))]), overflow: TextOverflow.ellipsis, maxLines: 1),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return Marker(
-                  point: LatLng(lat, lon), 
-                  width: 28, height: 28,
-                  child: GestureDetector(
-                    onTap: () => _showDurakSheet(d), 
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2979FF),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [BoxShadow(color: const Color(0xFF2979FF).withOpacity(0.3), blurRadius: 4, spreadRadius: 1)],
-                      ),
-                      child: const Center(child: Icon(Icons.directions_bus, color: Colors.white, size: 14)),
-                    ),
-                  )
-                );
-              });
-            }(),
-          ]),
-        ],
-      ),
-      // FAB'lar
-      Positioned(bottom: 16, right: 16,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _glassFab(Icons.my_location, () async { await _getLocation(); }),
-          const SizedBox(height: 8),
-          if (_liveVehicles.isNotEmpty)
-            _glassFab(Icons.directions_bus, () {
-              // Canlı araç bilgilerini göster
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('🚌 ${_liveVehicles.length} canlı araç takip ediliyor ($_activeLineCode)'),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: const Color(0xFF0D47A1),
-                ),
-              );
-            }, badge: '${_liveVehicles.length}'),
-        ]),
-      ),
-      // Durak sayacı
-      Positioned(bottom: 16, left: 16,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0A1628).withOpacity(0.85),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.location_on, color: Color(0xFF2979FF), size: 14),
-            const SizedBox(width: 4),
-            Text("${_duraklar.length} durak", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8))),
-          ]),
-        ),
-      ),
-      // Akıllı Durak (SmartStation) / QR Durak Arama
-      Positioned(top: 8, left: 12, right: 12, // Safe area genelde AppBar veya framework halleder ama SafeArea sarmalayınca daha iyi
-        child: SafeArea(
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF152238).withOpacity(0.95),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: "Akıllı Durak No girin (Örn: 10101)",
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
-                prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF69F0AE), size: 20),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-              onSubmitted: (val) {
-                final query = val.trim();
-                if (query.isNotEmpty) {
-                   final find = _duraklar.where((d) {
-                     final durakId = d['id']?.toString() ?? '';
-                     final kod = d['kod']?.toString() ?? '';
-                     final ad = d['ad']?.toString() ?? '';
-                     // Adın başındaki sayısal kısmı da akıllı durak no olarak kabul et (ör: "50122 - SOĞUK SU")
-                     final adMatch = RegExp(r'^(\d+)').firstMatch(ad);
-                     final adKod = adMatch?.group(1) ?? '';
-                     return durakId == query || kod == query || adKod == query || ad.toUpperCase().contains(query.toUpperCase());
-                   }).toList();
-                   if (find.isNotEmpty) {
-                      final f = find.first;
-                      _mapController.move(LatLng((f['lat'] as num).toDouble(), (f['lon'] as num).toDouble()), 16.0);
-                      _showDurakSheet(f);
-                   } else {
-                      _toastError("❌ Durak bulunamadı: $query");
-                   }
-                }
-              },
-            ),
-          ),
-        ),
-      ),
-      // TOAST OVERLAY
-      ..._buildToastOverlay(),
-    ]);
-  }
-
-  Widget _glassFab(IconData icon, VoidCallback onTap, {String? badge}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48, height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFF152238).withOpacity(0.9),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8)],
-        ),
-        child: Stack(children: [
-          Center(child: Icon(icon, color: const Color(0xFF2979FF), size: 22)),
-          if (badge != null)
-            Positioned(top: 2, right: 2, child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(color: Color(0xFFFF5252), shape: BoxShape.circle),
-              child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-            )),
-        ]),
-      ),
+    return HomeMapWidget(
+      mapController: _mapController,
+      isLoadingMap: _isLoadingMap,
+      myLocation: _myLocation,
+      targetLocation: _targetLocation,
+      routePolyline: _routePolyline,
+      activeLineDuraklar: _activeLineDuraklar,
+      activeLineRoadPolyline: _activeLineRoadPolyline,
+      liveVehicles: _liveVehicles,
+      duraklar: _duraklar,
+      showNearbyOnly: _showNearbyOnly,
+      activeLineCode: _activeLineCode,
+      toastOverlayWidgets: _buildToastOverlay(),
+      onTargetSelected: (latLng) {
+        setState(() => _targetLocation = latLng);
+        _toastInfo("🎯 Hedef seçildi: ${latLng.latitude.toStringAsFixed(4)}, ${latLng.longitude.toStringAsFixed(4)}");
+      },
+      onCalculateRoute: _calculateRouteFromCoords,
+      onStopTap: _showDurakSheet,
+      onLocationPress: () async { await _getLocation(); },
+      onToastError: _toastError,
     );
   }
 
@@ -765,10 +470,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F1E36).withOpacity(0.95),
+              color: const Color(0xFF0F1E36).withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: t.color.withOpacity(0.3)),
-              boxShadow: [BoxShadow(color: t.color.withOpacity(0.15), blurRadius: 12)],
+              border: Border.all(color: t.color.withValues(alpha: 0.3)),
+              boxShadow: [BoxShadow(color: t.color.withValues(alpha: 0.15), blurRadius: 12)],
             ),
             child: Row(children: [
               Icon(t.icon, color: t.color, size: 18),
@@ -797,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: _yakinDuraklar.isEmpty
             ? Center(child: Padding(padding: const EdgeInsets.all(24),
                 child: Text("Butona basarak GPS'e yakın (1 km) durakları listeleyin.\n\nGPS izni verildiğinden emin olun.",
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.4)))))
+                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.4)))))
             : ListView.builder(
                 itemCount: _yakinDuraklar.length,
                 itemBuilder: (_, i) {
@@ -817,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF152238),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                     ),
                     child: ListTile(
                       leading: Container(
@@ -829,8 +534,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Center(child: Text(durakKodu.isEmpty ? '?' : durakKodu, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
                       ),
                       title: Text(d['ad']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                      subtitle: Text("$dist metre", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
-                      trailing: Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3)),
+                      subtitle: Text("$dist metre", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
+                      trailing: Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.3)),
                       onTap: () => _showDurakSheet(d),
                     ),
                   );
@@ -846,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text("🧭 Hibrit Rota", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
-        Text("Tramvay öncelikli akıllı rota", style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+        Text("Tramvay öncelikli akıllı rota", style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(14),
@@ -854,7 +559,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(children: [
             const Icon(Icons.my_location, color: Color(0xFF2979FF), size: 20),
             const SizedBox(width: 10),
-            Expanded(child: Text("GPS (${_myLocation.latitude.toStringAsFixed(4)}, ${_myLocation.longitude.toStringAsFixed(4)})", style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7)))),
+            Expanded(child: Text("GPS (${_myLocation.latitude.toStringAsFixed(4)}, ${_myLocation.longitude.toStringAsFixed(4)})", style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)))),
           ]),
         ),
         if (_targetLocation != null) ...[
@@ -862,16 +567,16 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.red.shade900.withOpacity(0.3), Colors.red.shade800.withOpacity(0.2)]),
-              borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withOpacity(0.2)),
+              gradient: LinearGradient(colors: [Colors.red.shade900.withValues(alpha: 0.3), Colors.red.shade800.withValues(alpha: 0.2)]),
+              borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
             ),
             child: Row(children: [
               const Icon(Icons.flag, color: Color(0xFFFF5252), size: 20),
               const SizedBox(width: 10),
               Expanded(child: Text("Hedef: ${_targetLocation!.latitude.toStringAsFixed(4)}, ${_targetLocation!.longitude.toStringAsFixed(4)}",
-                style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7)))),
+                style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)))),
               GestureDetector(onTap: () => setState(() => _targetLocation = null),
-                child: Icon(Icons.close, size: 16, color: Colors.white.withOpacity(0.4))),
+                child: Icon(Icons.close, size: 16, color: Colors.white.withValues(alpha: 0.4))),
             ]),
           ),
         ],
@@ -883,11 +588,11 @@ class _HomeScreenState extends State<HomeScreen> {
             labelText: "Nereye gitmek istiyorsunuz?",
             hintText: "Cadde, mahalle, mekan adı yazın...",
             prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5252)),
-            suffixIcon: IconButton(icon: Icon(Icons.clear, color: Colors.white.withOpacity(0.3)), onPressed: () => _hedefCtrl.clear()),
+            suffixIcon: IconButton(icon: Icon(Icons.clear, color: Colors.white.withValues(alpha: 0.3)), onPressed: () => _hedefCtrl.clear()),
           ),
         ),
         const SizedBox(height: 8),
-        Text("Veya haritada istediğiniz yere uzun basın", style: TextStyle(fontSize: 11, color: Colors.amber.withOpacity(0.6))),
+        Text("Veya haritada istediğiniz yere uzun basın", style: TextStyle(fontSize: 11, color: Colors.amber.withValues(alpha: 0.6))),
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: _isRouting ? null : _calculateRoute,
@@ -899,7 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (_routeResults.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Divider(color: Colors.white.withOpacity(0.08)),
+          Divider(color: Colors.white.withValues(alpha: 0.08)),
           const Text("Bulunan Rotalar:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
           const SizedBox(height: 8),
           ...List.generate(_routeResults.length, (i) {
@@ -916,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: Icon(isDirect ? Icons.directions_bus : Icons.transfer_within_a_station, color: Colors.white),
                 title: Text(isDirect ? "Direkt Hat" : "Aktarmalı Rota", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(r['desc'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                  Text(r['desc'] ?? '', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
                   Text('💰 $tamFiyat ₺', style: const TextStyle(color: Color(0xFF69F0AE), fontWeight: FontWeight.bold)),
                 ]),
                 onTap: () {
@@ -1072,7 +777,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(widget.durak['ad']?.toString() ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text("Durak No: ${widget.durakKod}", style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+            Text("Durak No: ${widget.durakKod}", style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
           ])),
         ]),
         const SizedBox(height: 12),
@@ -1087,7 +792,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
             if (_loading) const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2979FF)))
             else Icon(_araclar.isNotEmpty ? Icons.check_circle : Icons.info, size: 14, color: _araclar.isNotEmpty ? const Color(0xFF69F0AE) : const Color(0xFF546E8A)),
             const SizedBox(width: 8),
-            Expanded(child: Text(_statusMsg, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7)))),
+            Expanded(child: Text(_statusMsg, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)))),
           ]),
         ),
         const SizedBox(height: 12),
@@ -1095,7 +800,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
           const Expanded(child: Center(child: CircularProgressIndicator(color: Color(0xFF2979FF))))
         else if (_araclar.isEmpty)
           Expanded(child: Center(child: Text("Bu durağa yaklaşan araç yok\n\n(ASIS API yanıt vermedi veya araç yok)",
-            textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withOpacity(0.3)))))
+            textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.3)))))
         else
           Expanded(
             child: ListView.builder(
@@ -1114,7 +819,7 @@ class _DurakDetailSheetState extends State<_DurakDetailSheet> {
                       child: Center(child: Text("${remaining}dk", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
                     ),
                     title: Text("$lineCode Hattı", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    subtitle: Text("~$remaining dakika", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                    subtitle: Text("~$remaining dakika", style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
                   ),
                 );
               },

@@ -66,11 +66,12 @@ info "Flutter ortamı kontrol ediliyor..."
 log "## 1. Flutter Ortamı"
 log ""
 
-DOCTOR_OUT=$(flutter doctor 2>&1)
+DOCTOR_OUT=$(flutter doctor 2>&1 || true)
 echo "$DOCTOR_OUT" >> "$REPORT"
 
 if echo "$DOCTOR_OUT" | grep -q "\[!\]"; then
-  ISSUES=$(echo "$DOCTOR_OUT" | grep "\[!\]" | wc -l)
+  # Linux toolchain uyarısını sayma — sadece Android sorunlarını say
+  ISSUES=$(echo "$DOCTOR_OUT" | grep "\[!\]" | grep -v "Linux toolchain" | wc -l)
   fail "Flutter Doctor: $ISSUES sorun bulundu"
   ISSUE_COUNT=$((ISSUE_COUNT + ISSUES))
   log "**❌ $ISSUES kritik sorun bulundu**"
@@ -123,7 +124,9 @@ log ""
 PUB_OUT=$(flutter pub outdated 2>&1 || true)
 echo "$PUB_OUT" >> "$REPORT"
 
-OUTDATED=$(echo "$PUB_OUT" | grep -c "^\*" || true)
+OUTDATED=$(echo "$PUB_OUT" | grep -c "^\s*\*" || true)
+OUTDATED_MSG=$(flutter pub get 2>&1 | grep -c "newer versions incompatible" || true)
+[ "$OUTDATED_MSG" -gt 0 ] && OUTDATED=$((OUTDATED + OUTDATED_MSG))
 if [ "$OUTDATED" -gt 0 ]; then
   warn "$OUTDATED eski/güncel olmayan paket var"
   WARN_COUNT=$((WARN_COUNT+OUTDATED))

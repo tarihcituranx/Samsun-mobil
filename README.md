@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-# Samsun Ulaşım 🇹🇷
+# Samsun Ulaşım 🇹🇷 | Samsun-mobil
 
-A new Flutter project.By Turan
+A new Flutter project. By Turan
 
 ## Getting Started
 
@@ -15,9 +14,8 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-=======
-# Samsun-mobil
->>>>>>> f52d794a46d8a916ce5d0aff878e641c7c8783de
+
+> ⚠️ **Production Notu:** Release build şu an debug key ile imzalanmaktadır. Production dağıtımı için gerçek keystore kullanılmalıdır. Bkz: `android/app/build.gradle.kts` → `signingConfig`.
 
 ---
 

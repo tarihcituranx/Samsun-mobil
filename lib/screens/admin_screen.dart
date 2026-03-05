@@ -151,7 +151,7 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(height: 24),
           const Text('Admin Girişi', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 8),
-          Text('Sunucu yönetim paneli', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+          Text('Sunucu yönetim paneli', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
           const SizedBox(height: 32),
           TextField(
             controller: _keyController,
@@ -288,7 +288,7 @@ class _AdminScreenState extends State<AdminScreen> {
           child: Wrap(spacing: 6, runSpacing: 6,
             children: activeLines.entries.map((e) => Chip(
               label: Text('${e.key} (${e.value}sn)', style: const TextStyle(fontSize: 11)),
-              backgroundColor: const Color(0xFF2979FF).withOpacity(0.2),
+              backgroundColor: const Color(0xFF2979FF).withValues(alpha: 0.2),
               side: BorderSide.none,
               visualDensity: VisualDensity.compact,
             )).toList(),

@@ -15,7 +15,6 @@ class OdakScreen extends StatefulWidget {
 class _OdakScreenState extends State<OdakScreen> {
   List<dynamic> _odaklar = [];
   bool _isLoading = true;
-  bool _isOfflineFallback = false;
 
   @override
   void initState() { super.initState(); _loadOdaklar(); }
@@ -26,7 +25,6 @@ class _OdakScreenState extends State<OdakScreen> {
     
     // 3. Son çare: yerel DB
     if (dynOdaklar.isEmpty) {
-      _isOfflineFallback = true;
       dynOdaklar = await DBService().getOdaklar();
     }
 
@@ -64,7 +62,7 @@ class _OdakScreenState extends State<OdakScreen> {
                 children: [
                   const Text("Turistik Rotalar", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const SizedBox(height: 8),
-                  Text("Şehrin turistik ve kültürel rotalarını keşfedin.", style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14)),
+                  Text("Şehrin turistik ve kültürel rotalarını keşfedin.", style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14)),
                 ],
               ),
             ),
@@ -77,13 +75,13 @@ class _OdakScreenState extends State<OdakScreen> {
         margin: const EdgeInsets.all(8), padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: const Color(0xFF2A2200),
-          border: Border.all(color: const Color(0xFFFFAB00).withOpacity(0.2)),
+          border: Border.all(color: const Color(0xFFFFAB00).withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(children: [
           const Text("⚠️ ", style: TextStyle(fontSize: 14)),
           Expanded(child: Text("Fiyatlar değişiklik gösterebilir. Lütfen teyit ediniz.",
-            style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.6)))),
+            style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.6)))),
         ]),
       ),
 
@@ -112,9 +110,9 @@ class _OdakScreenState extends State<OdakScreen> {
             ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Text("🎯", style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 12),
-                Text("Odak verisi henüz yüklenmemiş", style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14)),
+                Text("Odak verisi henüz yüklenmemiş", style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 14)),
                 const SizedBox(height: 4),
-                Text("DB güncellendikten sonra burada görünecek", style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 11)),
+                Text("DB güncellendikten sonra burada görünecek", style: TextStyle(color: Colors.white.withValues(alpha: 0.25), fontSize: 11)),
               ]))
             : ListView.builder(
                 padding: const EdgeInsets.all(8), itemCount: _odaklar.length,
@@ -125,7 +123,7 @@ class _OdakScreenState extends State<OdakScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF152238),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF00BFA5).withOpacity(0.1)),
+                      border: Border.all(color: const Color(0xFF00BFA5).withValues(alpha: 0.1)),
                     ),
                     child: ListTile(
                       leading: Container(
@@ -137,8 +135,8 @@ class _OdakScreenState extends State<OdakScreen> {
                         child: const Center(child: Text("🎯", style: TextStyle(fontSize: 18))),
                       ),
                       title: Text("${o['kod'] ?? o['kodu'] ?? ''} ${o['ad'] ?? o['adi'] ?? ''}", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white)),
-                      subtitle: Text(o['gunler']?.toString() ?? '', style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.35))),
-                      trailing: Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.2)),
+                      subtitle: Text(o['gunler']?.toString() ?? '', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.35))),
+                      trailing: Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.2)),
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OdakDetailScreen(odak: o))),
                     ),
                   );
@@ -163,7 +161,6 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
   List<dynamic> _vehicles = [];
   bool _isLoading = true;
   bool _vehiclesLoading = false;
-  bool _odakActive = false;
   String _odakMessage = '';
 
   @override
@@ -190,7 +187,6 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
       final vehicles = await ApiService.getHattakiAraclar(kod);
       if (mounted) {
         setState(() {
-          _odakActive = vehicles.isNotEmpty;
           _odakMessage = vehicles.isEmpty ? 'Aktif araç bulunamadı' : '';
           _vehicles = vehicles;
           _vehiclesLoading = false;
@@ -199,7 +195,6 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _odakActive = false;
           _odakMessage = 'Araç bilgileri alınamadı. İnternet bağlantınızı kontrol edin.';
           _vehicles = [];
           _vehiclesLoading = false;
@@ -228,17 +223,17 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                   Column(children: [
                     Text("${_duraklar.length}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text("Durak", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5))),
+                    Text("Durak", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
                   ]),
                   if (_duraklar.isNotEmpty)
                     Column(children: [
                       Text("₺${_duraklar.first['fiyat'] ?? '?'}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text("Tam", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5))),
+                      Text("Tam", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
                     ]),
                   if (_vehicles.isNotEmpty)
                     Column(children: [
                       Text("${_vehicles.length}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFFF5252))),
-                      Text("Araç", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5))),
+                      Text("Araç", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
                     ]),
                 ]),
               ),
@@ -281,7 +276,7 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
               // Harita
               if (_duraklar.isNotEmpty) Container(
                 height: 200, margin: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(0.08))),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
                 clipBehavior: Clip.antiAlias,
                 child: FlutterMap(
                   options: MapOptions(
@@ -321,7 +316,7 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
                           width: 28, height: 28,
                           child: Container(
                             decoration: BoxDecoration(color: const Color(0xFFFF5252), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [BoxShadow(color: const Color(0xFFFF5252).withOpacity(0.4), blurRadius: 6)]),
+                              boxShadow: [BoxShadow(color: const Color(0xFFFF5252).withValues(alpha: 0.4), blurRadius: 6)]),
                             child: const Center(child: Icon(Icons.directions_bus, size: 14, color: Colors.white)),
                           ),
                         );
@@ -388,7 +383,7 @@ class _OdakDetailScreenState extends State<OdakDetailScreen> {
                               )
                           ],
                         ),
-                        subtitle: Text("Tam: ₺${d['fiyat'] ?? '?'} / İnd: ₺${d['fiyat_ogr'] ?? '?'}", style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4))),
+                        subtitle: Text("Tam: ₺${d['fiyat'] ?? '?'} / İnd: ₺${d['fiyat_ogr'] ?? '?'}", style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.4))),
                         dense: true,
                       ),
                     );
