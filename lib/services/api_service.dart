@@ -157,7 +157,8 @@ class ApiService {
         'BusLineNo':                 _s(item['BusLineNo']),
         'BusLineShortName':          _s(item['BusLineShortName']),
         'panelId':                   item['panelId']?.toString() ?? '',
-        // ASIS string döner — int'e çevir
+        // ASIS tüm alanları string döner (ör: "15", "0", "41.37006833")
+        // int/double'a çeviriyoruz, parse başarısızsa 0 döner
         'RemainingTimeCurr':         int.tryParse(item['RemainingTimeCurr']?.toString() ?? '') ?? 0,
         'RemainingTimeNext':         int.tryParse(item['RemainingTimeNext']?.toString() ?? '') ?? 0,
         'IsAccordingToTimeSchedule': _s(item['IsAccordingToTimeSchedule'], 'A'),
@@ -165,7 +166,7 @@ class ApiService {
         'BusStatusNext':             _s(item['BusStatusNext']),
         'distance':                  int.tryParse(item['distance']?.toString() ?? '') ?? 0,
         'RemainingNumberOfBusStops': int.tryParse(item['RemainingNumberOfBusStops']?.toString() ?? '') ?? 0,
-        // ASIS string döner — double'a çevir
+        // ASIS koordinatları string döner (ör: "41.37006833", "36.22803333")
         'latitude':                  double.tryParse(item['latitude']?.toString() ?? '') ?? 0.0,
         'longitude':                 double.tryParse(item['longitude']?.toString() ?? '') ?? 0.0,
         'speed':                     int.tryParse(item['speed']?.toString() ?? '') ?? 0,
