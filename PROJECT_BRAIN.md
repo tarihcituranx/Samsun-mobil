@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 05.03.2026 00:06
+> **Son güncelleme:** 05.03.2026 00:37
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+17
+- **Sürüm:** 1.0.0+18
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -23,16 +23,18 @@
 - **CI/CD:** GitHub Actions → scripts/build.sh
 
 ## 📊 Kod İstatistikleri
-- Dart dosyası: 21
-- Toplam satır: 6603
+- Dart dosyası: 28
+- Toplam satır: 7118
 
 ## 📁 Klasör Yapısı
 lib/
+├── constants.dart
 ├── helpers/  (1 dosya)
 ├── l10n/  (0 dosya)
 ├── main.dart
 ├── screens/  (9 dosya)
-├── services/  (10 dosya)
+├── services/  (12 dosya)
+├── widgets/  (4 dosya)
 
 ## ✅ Tamamlanan Görevler
 - [x] Proje kurulumu
@@ -79,8 +81,8 @@ lib/
 - version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 05.03.2026 00:06
-- Son commit: build: v1.0.0+17 - APK yayınlandı
+- Tarih: 05.03.2026 00:37
+- Son commit: build: v1.0.0+18 - APK yayınlandı
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
@@ -92,9 +94,9 @@ lib/
 
 ## 📜 Git Geçmişi (Son 5)
 ```
+97d139d build: v1.0.0+18 - APK yayınlandı
+5657283 Merge pull request #4 from tarihcituranx/copilot/fix-android-license-issue
+140d7d4 Add transfer rules, OSRM road polylines, ring direction switch, SamAir names, logo resize
+7310105 brain: hafıza güncellendi — 05.03.2026 00:06
 6e65e64 build: v1.0.0+17 - APK yayınlandı
-9541e3a brain: hafıza güncellendi — 04.03.2026 23:48
-87bd3eb build: v1.0.0+16 - APK yayınlandı
-7f1094b brain: hafıza güncellendi — 04.03.2026 23:29
-4f6a745 build: v1.0.0+15 - APK yayınlandı
 ```
