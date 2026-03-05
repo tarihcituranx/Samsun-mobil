@@ -30,6 +30,10 @@
 # Android
 /android/key.properties
 /android/*.keystore
+*.jks
+*.b64
+samsun_release.jks
+samsun_release.b64
 /android/gradlew
 /android/gradle.bat
 /android/local.properties
