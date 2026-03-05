@@ -1,24 +1,20 @@
 name: Samsun Mobil - APK Derle ve Dağıt
-
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       # 1) Kodu al
       - name: Repoyu klonla
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # git log/tag için tüm geçmiş lazım
-          token: ${{ secrets.APK_REPO_TOKEN }} # <-- SADECE BU SATIRI EKLE
+          fetch-depth: 0
+          token: ${{ secrets.APK_REPO_TOKEN }}
 
       # 2) Flutter kur
       - name: Flutter kur
@@ -52,7 +48,21 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # 5) build.sh'ı çalıştır (her şeyi o halleder)
+      # 5) Keystore oluştur
+      - name: Keystore yaz
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/samsun_ulasim.jks
+
+      # 6) key.properties oluştur
+      - name: key.properties yaz
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=samsun_ulasim.jks
+          EOF
+
+      # 7) build.sh'ı çalıştır (her şeyi o halleder)
       - name: Build & Deploy
         env:
           APK_REPO_TOKEN: ${{ secrets.APK_REPO_TOKEN }}
@@ -63,7 +73,7 @@ jobs:
           chmod +x scripts/build.sh
           bash scripts/build.sh
 
-      # 6) Artifacts olarak da sakla (opsiyonel yedek)
+      # 8) Artifacts olarak da sakla (opsiyonel yedek)
       - name: Artifacts kaydet
         if: always()
         uses: actions/upload-artifact@v4
@@ -72,7 +82,7 @@ jobs:
           path: logs/
           retention-days: 14
 
-      # 7) Bug raporu artifact (LOG-1)
+      # 9) Bug raporu artifact
       - name: Bug raporunu sakla
         if: always()
         uses: actions/upload-artifact@v4
@@ -81,7 +91,7 @@ jobs:
           path: /home/runner/bug_report_*.md
           retention-days: 30
 
-      # 8) Log klasörü artifact (LOG-2)
+      # 10) Log klasörü artifact
       - name: Log klasörünü sakla
         if: always()
         uses: actions/upload-artifact@v4
