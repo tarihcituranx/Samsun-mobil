@@ -1,4 +1,4 @@
-# Samsun Ulaşım 🇹🇷 | Samsun-mobill
+# Samsun Ulaşım 🇹🇷 | Samsun-mobilll
 
 A new Flutter project. By Turan
 
