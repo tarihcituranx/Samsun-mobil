@@ -1,7 +1,11 @@
+# Test results (generated)
+tests/test_results.json
+
 # Miscellaneous
 *.class
 *.log
 *.pyc
+__pycache__/
 *.swp
 .DS_Store
 .atom/

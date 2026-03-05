@@ -258,6 +258,16 @@ check_disk 1500
 # ── 6. Bağımlılıkları düzelt ve yükle ────────────────────
 fix_dependencies
 
+# ── 6b. Python API testlerini çalıştır ────────────────────
+if [ -f "$PROJECT_DIR/tests/test_api_endpoints.py" ]; then
+  log INFO "Python API testleri çalıştırılıyor..."
+  python3 "$PROJECT_DIR/tests/test_api_endpoints.py" 2>&1 | tee -a "$LOG_FILE" || true
+  if [ -f "$PROJECT_DIR/tests/test_results.json" ]; then
+    cp "$PROJECT_DIR/tests/test_results.json" "$LOG_DIR/test_results_$(date +%Y%m%d_%H%M).json" 2>/dev/null || true
+    log OK "API test sonuçları kaydedildi"
+  fi
+fi
+
 # ── 7. APK derle ──────────────────────────────────────────
 log INFO "APK derleniyor (release)... ☕"
 FLUTTER_BUILD_START=$(date +%s)
@@ -335,6 +345,15 @@ log OK "Ana repo güncellendi"
 run_optional    "project_map.sh"   # README + mimari harita + temizlik
 run_optional    "bug_scan.sh"      # Kaynak + APK tarayıcı
 run_optional_py "brain_update.py"  # PROJECT_BRAIN.md güncelleyici
+
+# ── 13b. Bug raporu varsa logs/ klasörüne kopyala ─────────
+if ls /home/runner/bug_report_*.md 1>/dev/null 2>&1; then
+  cp /home/runner/bug_report_*.md "$LOG_DIR/" 2>/dev/null || true
+  log OK "Bug raporu logs/ klasörüne kopyalandı"
+fi
+if ls "$PROJECT_DIR"/bug_report_*.md 1>/dev/null 2>&1; then
+  cp "$PROJECT_DIR"/bug_report_*.md "$LOG_DIR/" 2>/dev/null || true
+fi
 
 # ── 14. Log kapanış ───────────────────────────────────────
 {
