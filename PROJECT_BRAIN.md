@@ -2,14 +2,14 @@
 
 > Bu dosya Claude'un proje hafızasıdır. Her oturumda okunur, her önemli
 > değişiklikte güncellenir. Alzheimer yaşamamak için burada!
-> **Son güncelleme:** 05.03.2026 12:25
+> **Son güncelleme:** 05.03.2026 12:56
 
 ---
 
 ## 📌 Proje Özeti
 - **Ad:** Samsun Ulaşım Sistemi
 - **Paket:** com.tarihcituranx.samsun_ulasim
-- **Sürüm:** 1.0.0+25
+- **Sürüm:** 1.0.0+26
 - **Platform:** Android (min SDK 24)
 - **Geliştirici:** Turan Kaya
 - **Ana Repo:** https://github.com/tarihcituranx/Samsun-mobil
@@ -24,7 +24,7 @@
 
 ## 📊 Kod İstatistikleri
 - Dart dosyası: 28
-- Toplam satır: 7247
+- Toplam satır: 7723
 
 ## 📁 Klasör Yapısı
 lib/
@@ -81,8 +81,8 @@ lib/
 - version.json: https://github.com/tarihcituranx/test/raw/main/releases/version.json
 
 ## 📝 Son Oturum Notları
-- Tarih: 05.03.2026 12:25
-- Son commit: build: v1.0.0+25 - APK yayınlandı
+- Tarih: 05.03.2026 12:56
+- Son commit: build: v1.0.0+26 - APK yayınlandı
 - Bırakılan: —
 
 ## ⚠️ Dikkat Edilecekler
@@ -94,9 +94,9 @@ lib/
 
 ## 📜 Git Geçmişi (Son 5)
 ```
+53e66d9 build: v1.0.0+26 - APK yayınlandı
+05af328 Add files via upload
+6231b1e Update api_service.dart
+7fa9fcb brain: hafıza güncellendi — 05.03.2026 12:25
 66c032b build: v1.0.0+25 - APK yayınlandı
-5f75f79 brain: hafıza güncellendi — 05.03.2026 12:07
-71af63a build: v1.0.0+24 - APK yayınlandı
-903457a brain: hafıza güncellendi — 05.03.2026 11:47
-8f7aa44 build: v1.0.0+23 - APK yayınlandı
 ```
