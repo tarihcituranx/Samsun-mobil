@@ -44,7 +44,7 @@ export const useRouteSearch = (fromCoords: string, toCoords: string, enabled: bo
     queryKey: ['route', fromCoords, toCoords],
     queryFn: async () => {
       // OTP2 endpoint
-      const baseUrl = 'https://seeds-humanity-visitors-approx.trycloudflare.com';
+      const baseUrl = process.env.EXPO_PUBLIC_OTP_URL || 'http://164.92.219.87:8080';
       // format: lat,lon
       
       const params = new URLSearchParams({
