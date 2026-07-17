@@ -1,0 +1,46 @@
+{
+  "name": "transit-app",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
+    "@maplibre/maplibre-react-native": "^11.3.6",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@tanstack/react-query": "^5.101.2",
+    "expo": "~57.0.6",
+    "expo-asset": "~57.0.5",
+    "expo-blur": "~57.0.2",
+    "expo-build-properties": "~57.0.5",
+    "expo-constants": "~57.0.5",
+    "expo-font": "~57.0.1",
+    "expo-linking": "~57.0.3",
+    "expo-location": "~57.0.4",
+    "expo-network": "~57.0.1",
+    "expo-notifications": "~57.0.5",
+    "expo-router": "~57.0.6",
+    "expo-sharing": "~57.0.5",
+    "expo-splash-screen": "~57.0.4",
+    "expo-sqlite": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "lucide-react-native": "^1.24.0",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/mapbox__polyline": "^1.0.5",
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
+}
