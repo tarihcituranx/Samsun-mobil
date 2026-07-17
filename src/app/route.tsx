@@ -87,33 +87,49 @@ export default function RouteScreen() {
 
       setSearchResults(matchedStops);
       
-      // 2. Photon API ile Dış Mekan Ara (Samsun odaklı)
+      // 2. Google Places API (VPS üzerinden) ve Fallback Photon API
       try {
         setIsSearchingPhoton(true);
-        // Photon'a atılan istek
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchText)}+Samsun&limit=5`);
-        const data = await res.json();
+        const apiBaseUrl = useSettingsStore.getState().getCurrentCity().apiBaseUrl;
         
         let photonPlaces = [];
-        if (data.features && data.features.length > 0) {
-          photonPlaces = data.features.map((f: any) => ({
-            id: `photon_${f.properties.osm_id}`,
-            name: f.properties.name || f.properties.street || 'Bilinmeyen Yer',
-            desc: [f.properties.street, f.properties.district, f.properties.city].filter(Boolean).join(', '),
-            lat: f.geometry.coordinates[1],
-            lon: f.geometry.coordinates[0],
-            type: 'place' as const
-          }));
+        try {
+          // Önce VPS'teki Google Places uç noktamızı deneyelim
+          const googleRes = await fetch(`${apiBaseUrl}/places/search?q=${encodeURIComponent(searchText)}`, {
+            headers: { 'x-api-key': 'mobile-client' } // Eger API key gerekliyse (su an optional)
+          });
+          
+          if (googleRes.ok) {
+            const data = await googleRes.json();
+            photonPlaces = data.features || [];
+          } else {
+            throw new Error('Google Places API failed');
+          }
+        } catch (googleErr) {
+          console.warn('Google Places Hatası, Photon API\'ye düşülüyor...', googleErr);
+          // Fallback: Photon
+          const photonRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchText)}+Samsun&limit=5`);
+          const data = await photonRes.json();
+          
+          if (data.features && data.features.length > 0) {
+            photonPlaces = data.features.map((f: any) => ({
+              id: `photon_${f.properties.osm_id}`,
+              name: f.properties.name || f.properties.street || 'Bilinmeyen Yer',
+              desc: [f.properties.street, f.properties.district, f.properties.city].filter(Boolean).join(', '),
+              lat: f.geometry.coordinates[1],
+              lon: f.geometry.coordinates[0],
+              type: 'place' as const
+            }));
+          }
         }
 
         setSearchResults(prev => {
-          // Kendi duraklarımız ile dış mekan (Photon veya Proxy) sonuçlarını birleştir
+          // Kendi duraklarımız ile dış mekan sonuçlarını birleştir
           const combined = [...prev, ...photonPlaces];
-          // Toplam listeyi temizle
           return combined;
         });
       } catch (err) {
-        console.warn('Photon Arama Hatası:', err);
+        console.warn('Genel Arama Hatası:', err);
       } finally {
         setIsSearchingPhoton(false);
       }
