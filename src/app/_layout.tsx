@@ -36,6 +36,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import { GlobalErrorBoundary } from '../components/ErrorBoundary';
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const safeScheme = colorScheme === 'light' ? 'light' : 'dark';
@@ -108,13 +110,15 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <OfflineBanner />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}>
-        <Stack.Screen name="index" options={{ animation: 'fade' }} />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <OfflineBanner />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}>
+          <Stack.Screen name="index" options={{ animation: 'fade' }} />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
