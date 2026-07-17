@@ -377,3 +377,11 @@ Backend API'de `/super-line/{lineCode}` endpointine sorgu atarken:
 1. **Asla Kısa Kod Gönderme**: "22" veya "E3" gibi eksik hat kodları yollanırsa, API veritabanında `LIKE` araması yapar ve ilk eşleşen yönü (Örn: Sadece Dönüş) döndürür. Bu durum kullanıcı tarafında kafa karışıklığı yaratır.
 2. **alternatif_yonler Alanı**: Eğer kullanıcı eksik arama yaparsa, API arka planda diğer olası yönleri de bulur ve JSON cevabının en altına `alternatif_yonler: ["22 TÜRKİŞ-SOĞUKSU"]` adında bir liste ekler.
 3. **UI Görevi (Frontend)**: Uygulamada `LineDetailScreen` veya harita ekranında, eğer `alternatif_yonler` dizisi dolu gelmişse (örn: length > 0), ekrana "🔄 Diğer Yönü Gör" şeklinde belirgin bir buton koymalısın. Bu butona basıldığında, o alternatif kod ile API'ye yeniden istek atılmalı.
+
+---
+
+## 🛑 11. Oturum Kapanış Kuralları
+
+1. **"Bugünlük proje bitti"** veya benzeri bir kapanış komutu verildiğinde, AI ajanı derhal aşağıdaki işlemleri yapmakla yükümlüdür:
+   - O günkü ilerlemeyi `tracking.md` dosyasına kaydetmek.
+   - Yerel projedeki tüm değişiklikleri otomatik olarak GitHub'a (`git add .`, `git commit`, `git push`) gönderip yedeklemek.

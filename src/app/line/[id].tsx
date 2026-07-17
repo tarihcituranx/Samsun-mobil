@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, useColorScheme, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+// @ts-ignore
 import MapboxGL from '@maplibre/maplibre-react-native';
 import { BlurView } from 'expo-blur';
 import { Colors } from '../../constants/Colors';
@@ -161,7 +162,7 @@ export default function LineDetailScreen() {
       {superLine.alternatif_yonler && superLine.alternatif_yonler.length > 0 && (
         <TouchableOpacity 
           style={[styles.altBtn, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}
-          onPress={() => router.replace(`/line/${encodeURIComponent(superLine.alternatif_yonler[0].split(' ')[0])}`)}
+          onPress={() => router.replace(`/line/${encodeURIComponent(superLine.alternatif_yonler?.[0].split(' ')[0] || '')}`)}
         >
           <RefreshCcw size={16} color={theme.tint} style={{marginRight: 6}} />
           <Text style={{color: theme.tint, fontWeight: 'bold'}}>Diğer Yönü Gör</Text>

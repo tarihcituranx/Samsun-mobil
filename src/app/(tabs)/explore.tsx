@@ -37,7 +37,7 @@ export default function ExploreScreen() {
       const lon = userLocation.coords.longitude;
       
       const stopsWithDistance = allStops.map(stop => {
-        const distance = getDistance(lat, lon, stop.durak_enlem, stop.durak_boylam);
+        const distance = getDistance(lat, lon, stop.konum.lat, stop.konum.lng);
         return { stop, distance };
       });
       
@@ -73,7 +73,7 @@ export default function ExploreScreen() {
         ) : (
           nearestStops.map(({ stop, distance }, index) => (
             <TouchableOpacity 
-              key={stop.durak_id} 
+              key={stop.id.toString()} 
               style={[
                 styles.stopItem, 
                 { borderBottomColor: theme.border },
@@ -86,10 +86,10 @@ export default function ExploreScreen() {
               </View>
               <View style={styles.stopInfo}>
                 <Text style={[styles.stopName, { color: theme.text }]} numberOfLines={1}>
-                  {stop.durak_adi}
+                  {stop.isim}
                 </Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                  {stop.durak_id}
+                  {stop.id}
                 </Text>
               </View>
               <Text style={[styles.distanceText, { color: theme.accent }]}>
@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 12,

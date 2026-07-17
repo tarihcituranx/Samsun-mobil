@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-ignore
 import MapboxGL from '@maplibre/maplibre-react-native';
 import { Coordinates } from '../../types/transit';
 

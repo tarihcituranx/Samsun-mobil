@@ -7,7 +7,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useRouteSearch, OTPItinerary } from '../api/useRouteSearch';
-import { useAllStops, SuperStop } from '../store/useSettingsStore'; // Adjust if useAllStops is elsewhere
+import { useAllStops } from '../services/api/samsun';
+import { SuperStop } from '../types/transit';
 import { useRouteStore } from '../store/useRouteStore';
 
 // Tip tanımlamaları
@@ -73,14 +74,14 @@ export default function RouteScreen() {
       // 1. Yerel Durakları Filtrele
       const query = searchText.toLowerCase();
       const matchedStops = stops
-        .filter(s => s.name.toLowerCase().includes(query))
+        .filter(s => s.isim.toLowerCase().includes(query))
         .slice(0, 5) // En fazla 5 durak göster
         .map(s => ({
           id: `stop_${s.id}`,
-          name: s.name,
+          name: s.isim,
           desc: 'Otobüs/Tramvay Durağı',
-          lat: s.lat,
-          lon: s.lon,
+          lat: s.konum.lat,
+          lon: s.konum.lng,
           type: 'stop' as const
         }));
 

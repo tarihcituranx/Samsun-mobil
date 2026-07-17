@@ -1,5 +1,7 @@
 import { View, StyleSheet, useColorScheme } from 'react-native';
+// @ts-ignore
 import MapboxGL from '@maplibre/maplibre-react-native';
+import { Colors } from '../../constants/Colors';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { MapStyles } from '../../types/transit';
 import { StopMarkers } from '../../components/map/StopMarker';

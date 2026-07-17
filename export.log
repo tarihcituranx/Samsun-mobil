@@ -1,0 +1,39 @@
+Node.js (v20.18.0) is outdated and unsupported. Please update to a newer Node.js LTS version (required: >=20.19.4)
+Go to: https://nodejs.org/en/download
+
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 36861ms node_modules/expo-router/entry.js (3900 modules)
+Android Bundled 60733ms node_modules/expo-router/entry.js (3982 modules)
+
+› Assets (39):
+assets/fonts/Inter-Regular.ttf (411KB)
+assets/fonts/Inter-SemiBold.ttf (415KB)
+node_modules/@expo-google-fonts/material-symbols/400Regular/MaterialSymbols_400Regular.ttf (961KB)
+node_modules/@maplibre/maplibre-react-native/lib/module/assets/heading.png (3 variations | 450B)
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/arrow_right.xml (307B)
+node_modules/expo-router/assets/checkmark.xml (312B)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (8 variations | 359B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (7 variations | 592B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/entry-84b67862d6ef6736e7277b7989402173.hbc (6MB)
+
+› android bundles (1):
+_expo/static/js/android/entry-cbb7fe67f3f783f8a939263b9c5100d7.hbc (6.2MB)
+
+› Files (1):
+metadata.json (4KB)
+
+Exported: dist

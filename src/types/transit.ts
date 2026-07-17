@@ -57,4 +57,5 @@ export interface SuperLineResponse {
   saatler: Record<string, any[]>; // "Hafta İçi": [...], "Cumartesi": [...]
   canli_araclar: any; // { count: X, data: [...] } formatında gelebilir
   fiyat: any;
+  alternatif_yonler?: string[];
 }

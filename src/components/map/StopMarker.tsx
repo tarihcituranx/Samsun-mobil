@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-ignore
 import MapboxGL from '@maplibre/maplibre-react-native';
 import { SuperStop } from '../../types/transit';
 
@@ -8,7 +9,7 @@ interface StopMarkerProps {
   onPress?: (stop: SuperStop) => void;
 }
 
-export function StopMarkers({ stops, color = '#8899AA' }: StopMarkerProps) {
+export function StopMarkers({ stops, color = '#8899AA', onPress }: StopMarkerProps) {
   // Optimizasyon için ShapeSource ve SymbolLayer/CircleLayer kullanıyoruz.
   // Çok sayıda durak olduğunda MarkerView performansı düşürür.
   
@@ -34,7 +35,7 @@ export function StopMarkers({ stops, color = '#8899AA' }: StopMarkerProps) {
     <MapboxGL.ShapeSource 
       id="stopsSource" 
       shape={shape} 
-      onPress={(e) => {
+      onPress={(e: any) => {
         if (e.features && e.features.length > 0 && onPress) {
           // feature.properties includes id, name
           const feature = e.features[0];

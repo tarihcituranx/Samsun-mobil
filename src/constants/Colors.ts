@@ -29,7 +29,8 @@ export const Colors = {
     cableCar: '#FF4081',
     airport: '#FF5252',
     district: '#00BFA5',
-    tourist: '#4CAF50'
+    tourist: '#4CAF50',
+    odak: '#9C27B0'
   },
   dark: {
     background: '#0A1628',
@@ -61,6 +62,7 @@ export const Colors = {
     cableCar: '#FF4081',
     airport: '#FF5252',
     district: '#00BFA5',
-    tourist: '#4CAF50'
+    tourist: '#4CAF50',
+    odak: '#9C27B0'
   },
 };

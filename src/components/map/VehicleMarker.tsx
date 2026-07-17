@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+// @ts-ignore
 import MapboxGL from '@maplibre/maplibre-react-native';
 import { Vehicle } from '../../types/transit';
 import { Colors } from '../../constants/Colors';
