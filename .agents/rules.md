@@ -78,13 +78,12 @@ Bu bir **Akıllı Şehir Süper App**'tir. Fazlar halinde inşa edilecek katmanl
 └─────────────┘  └──────────────┘  └───────────────┘  └──────────┘
 ```
 
-### Otomasyon Takvimi (Backend In-Process Scheduler)
+### Otomasyon Takvimi (Sunucu Crontab - Docker Exec)
 
 | Görev | Sıklık | Script | Ne Yapıyor |
 |-------|--------|--------|-----------|
-| SAMAIR Sync | **Her saat** | `update_samair_schedules.py` | Uçuş saatlerini çekip DB'ye yazar |
-| GTFS Build | **Her gece 04:00** | `gtfs_builder.py` | Tam GTFS feed üretir (google_transit.zip) |
-| DB Rebuild | **Pazar 03:00** | `build_db.py` | ASIS'ten tüm hat/durak/sefer verisini sıfırdan çeker |
+| SAMAIR Sync + GTFS Build | **Her saat başı** (`0 * * * *`) | `update_samair_schedules.py` && `gtfs_builder.py` | SAMAIR uçuş saatlerini anlık çeker ve SAMAIR güncellendiği için GTFS feed (google_transit.zip) baştan yaratılır. |
+| DB Rebuild | **Günde 1 kez** (`0 3 * * *`) | `build_db.py` | ASIS'ten tüm klasik otobüs/durak verisini gece trafiğin az olduğu 03:00'da sıfırdan çeker. |
 
 ---
 
@@ -371,6 +370,8 @@ interface CityConfig {
 10. **Eski Flutter kodunu kopyalama** — Sadece feature ilhamı al
 11. **Proje dışı markdown dosyalarını referans alma** — Skill + bu anayasa yeterli
 12. **Tracking'i güncellememek** — Her oturum sonunda `tracking.md` güncellenMELİ
+13. **.env dosyalarını uygulama içine gömmek YASAK** — Çevre değişkenleri ve gizli anahtarlar (.env) sadece VPS sunucusunda barınacak, kaynak koda veya mobil app (frontend) dizinine ASLA eklenmeyecek.
+14. **Doğrudan VPS IP'sine İstek Atmak YASAK** — Mobil uygulama, API istekleri atarken (ASİS, OTP vs.) ASLA doğrudan sunucu IP'sini kullanmayacak. Güvenlik ve sunucu IP'sinin sızmasını önlemek adına her zaman tünellenmiş dış domainler (Ngrok, Cloudflare Tunnel vb.) kullanılacak.
 
 ## 🚨 API Entegrasyon Kritik Notları: Gidiş/Dönüş Alternatifleri
 Backend API'de `/super-line/{lineCode}` endpointine sorgu atarken:

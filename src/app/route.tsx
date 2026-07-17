@@ -10,6 +10,7 @@ import { useRouteSearch, OTPItinerary } from '../api/useRouteSearch';
 import { useAllStops } from '../services/api/samsun';
 import { SuperStop } from '../types/transit';
 import { useRouteStore } from '../store/useRouteStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 // Tip tanımlamaları
 type LocationResult = {

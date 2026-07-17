@@ -50,12 +50,38 @@ export interface LineInfo {
   kategori: string;
 }
 
+export interface DepartureTime {
+  saat: string;
+  yon?: string;
+}
+
+export interface LiveVehiclesInfo {
+  count: number;
+  data: Vehicle[];
+}
+
+export interface TicketPrice {
+  tam_fiyat?: number | string;
+  ogrenci_fiyat?: number | string;
+  mesafe_bazli?: boolean;
+  notlar?: string;
+}
+
+export interface BackendSuperLineStop {
+  durak_id: string | number;
+  durak_adi: string;
+  yon: number;
+  sira: number;
+  enlem: string;
+  boylam: string;
+}
+
 // /super-line/{code} endpoint response schema
 export interface SuperLineResponse {
   hat_bilgisi: LineInfo;
-  duraklar: any[]; // The backend might return different stop structure here
-  saatler: Record<string, any[]>; // "Hafta İçi": [...], "Cumartesi": [...]
-  canli_araclar: any; // { count: X, data: [...] } formatında gelebilir
-  fiyat: any;
+  duraklar: BackendSuperLineStop[];
+  saatler: Record<string, string[] | DepartureTime[]>; // "Hafta İçi": [...], "Cumartesi": [...]
+  canli_araclar: LiveVehiclesInfo;
+  fiyat: TicketPrice | null;
   alternatif_yonler?: string[];
 }

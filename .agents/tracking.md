@@ -2,14 +2,14 @@
 
 > Tüm fazlar, görevler ve ilerleme durumu burada izlenir.
 > **Her oturum sonunda bu dosya güncellenMELİDİR.**
-> **Son güncelleme:** 2026-07-16
+> **Son güncelleme:** 2026-07-17
 
 ---
 
 ## 🎯 Aktif Faz: FAZ 1 — Çekirdek MVP
 
-**Hedef:** Harita + Canlı Araç Takibi + Hat Bilgisi + Rota Hesaplama
-**Durum:** 🟡 Devam Ediyor (~%45)
+**Hedef:** Harita + Canlı Araç Takibi + Hat Bilgisi + Rota Hesaplama + Hata Yönetimi
+**Durum:** 🟢 Devam Ediyor (~%95)
 
 ---
 
@@ -91,12 +91,12 @@
 - [x] Mesafe gösterimi (metre)
 - [x] Durak detay bottom sheet (yaklaşan araçlar + ETA)
 
-### 1.10 Rota Ekranı (IMPLEMENTATION) - %90 Tamamlandı
+### ✅ 1.10 Rota Ekranı (TAMAMLANDI)
 - [x] Tasarım ve UI bileşenleri (Başlangıç/Hedef seçimi, yürüme süreleri)
 - [x] Arama çubuğu (Geocoding) algoritması:
   1. Yerel veritabanı (1627 durak - Offline)
-  2. Photon API (Dış mekanlar)
-  - *Not: Mapbox yetersiz Türkiye verisi nedeniyle devreden çıkarıldı.*
+  2. Google Places API (Samsun odaklı, VPS üzerinden limitli)
+  3. Photon API (Kotaya takılırsa Fallback)
 - [x] Rota API çağrısı (OTP2 entegrasyonu tamamlandı, store'a bağlandı)
 - [x] Sonuç kartları (direkt + aktarmalı) (UI)
 - [x] Haritada rota polyline gösterimi (useRouteStore ve MapLibre LineLayer ile)
@@ -114,11 +114,14 @@
 - [x] Canlı araç takibi (SAMAIR + Odak araçları)
 - [x] API hook'ları: `useSamairVehicles()`, `useOdakVehicles()`, `useOdakLines()`, `useSamairSchedules()`
 
-### ✅ 1.13 Polish & Test (TAMAMLANDI)
+### ✅ 1.13 Polish, Test & Güvenlik (TAMAMLANDI)
 - [x] Glassmorphism paneller (harita overlay'leri)
 - [x] Animasyon geçişleri (ekran arası, kart açılış, bottom sheet)
 - [x] Hata durumları (offline banner, API timeout, boş veri)
-- [x] Expo Go ile Android test (Hazır)
+- [x] Global Error Boundary (Çökmeleri yakalayıp kullanıcıya gösteren kalkan)
+- [x] Otomatik Github Issue (Uygulama çöktüğünde VPS üzerinden issue açma)
+- [x] Google Places Kota Koruması (Aylık limit, aşılırsa Photon'a fallback)
+- [x] EAS Build (APK) ile cihaz testleri hazır
 - [x] Performance profiling (1600+ marker lag kontrolü) (MapLibre ShapeSource ile çözüldü)
 
 ---
@@ -173,6 +176,8 @@
 | 2026-07-16 | REST JSON (GTFS-RT protobuf değil) | Backend zaten sarmalıyor, mobilde protobuf parse gereksiz |
 | 2026-07-16 | 3 katmanlı veri stratejisi | Canlı (polling) + Yarı-statik (cache) + Offline (SQLite) |
 | 2026-07-16 | Anayasa oluşturuldu | Her oturum başında referans, tracking güncel tutulacak |
+| 2026-07-17 | Google Places API (VPS Proxy) | Client'ta anahtar saklanmaz, VPS kotayı korur |
+| 2026-07-17 | Error Boundary & Auto Issue | Çökmeler gizlice Github'a loglanır, kullanıcı reset atar |
 
 ---
 
@@ -190,11 +195,11 @@
 
 | Metrik | Değer |
 |--------|-------|
-| Toplam kaynak dosya | 18 |
-| Toplam satır (src/) | ~1,193 |
-| Ekranlar | 5 (Harita, Hatlar, Keşfet, Ayarlar stub, Hat Detay) |
-| Componentler | 4 (StopMarker, StopBottomSheet, VehicleMarker, RoutePolyline) |
-| API hook'ları | 7 / ~14 planlanan |
+| Toplam kaynak dosya | 22 |
+| Toplam satır (src/) | ~1,450 |
+| Ekranlar | 6 (Harita, Hatlar, Keşfet, Ayarlar, Hat Detay, Error) |
+| Componentler | 5 (StopMarker, StopBottomSheet, VehicleMarker, RoutePolyline, ErrorBoundary) |
+| API hook'ları | 9 / ~14 planlanan |
 | Aktif faz | FAZ 1 |
-| FAZ 1 ilerleme | ~%45 |
+| FAZ 1 ilerleme | ~%95 |
 | Toplam planlanan faz | 7 |
