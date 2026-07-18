@@ -1,6 +1,6 @@
 import React from 'react';
 // @ts-ignore
-import MapboxGL from '@maplibre/maplibre-react-native';
+import { Map, Camera, UserLocation, GeoJSONSource, Layer, SymbolLayerStyle, LineLayerStyle, CameraRef } from '@maplibre/maplibre-react-native';
 import { Coordinates } from '../../types/transit';
 
 interface RoutePolylineProps {
@@ -22,8 +22,8 @@ export function RoutePolyline({ route, color = '#2979FF', lineWidth = 4, id = 'r
   } as any;
 
   return (
-    <MapboxGL.ShapeSource id={`${id}-source`} shape={shape}>
-      <MapboxGL.LineLayer
+    <GeoJSONSource id={`${id}-source`} data={shape}>
+      <Layer type="line"
         id={`${id}-layer`}
         style={{
           lineColor: color,
@@ -32,6 +32,6 @@ export function RoutePolyline({ route, color = '#2979FF', lineWidth = 4, id = 'r
           lineCap: 'round',
         }}
       />
-    </MapboxGL.ShapeSource>
+    </GeoJSONSource>
   );
 }

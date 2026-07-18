@@ -82,7 +82,7 @@ Bu bir **Akıllı Şehir Süper App**'tir. Fazlar halinde inşa edilecek katmanl
 
 | Görev | Sıklık | Script | Ne Yapıyor |
 |-------|--------|--------|-----------|
-| SAMAIR Sync + GTFS Build | **Her saat başı** (`0 * * * *`) | `update_samair_schedules.py` && `gtfs_builder.py` | SAMAIR uçuş saatlerini anlık çeker ve SAMAIR güncellendiği için GTFS feed (google_transit.zip) baştan yaratılır. |
+| SAMAIR Sync + GTFS Build | **Her saat başı** (`0 * * * *`) | `update_samair_schedules.py` && `gtfs_builder.py` && `otp restart` | SAMAIR saatlerini günceller, GTFS feed yaratır ve OTP'ye restart atarak saniyeler içinde yeni haritayı (`--loadStreet` ile) yükler. |
 | DB Rebuild | **Günde 1 kez** (`0 3 * * *`) | `build_db.py` | ASIS'ten tüm klasik otobüs/durak verisini gece trafiğin az olduğu 03:00'da sıfırdan çeker. |
 
 ---

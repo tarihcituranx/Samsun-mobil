@@ -1,6 +1,6 @@
 import React from 'react';
 // @ts-ignore
-import MapboxGL from '@maplibre/maplibre-react-native';
+import { Map, Camera, UserLocation, GeoJSONSource, Layer, SymbolLayerStyle, LineLayerStyle, CameraRef } from '@maplibre/maplibre-react-native';
 import { SuperStop } from '../../types/transit';
 
 interface StopMarkerProps {
@@ -32,9 +32,9 @@ export function StopMarkers({ stops, color = '#8899AA', onPress }: StopMarkerPro
   } as any;
 
   return (
-    <MapboxGL.ShapeSource 
+    <GeoJSONSource 
       id="stopsSource" 
-      shape={shape} 
+      data={shape} 
       onPress={(e: any) => {
         if (e.features && e.features.length > 0 && onPress) {
           // feature.properties includes id, name
@@ -52,7 +52,7 @@ export function StopMarkers({ stops, color = '#8899AA', onPress }: StopMarkerPro
         }
       }}
     >
-      <MapboxGL.CircleLayer
+      <Layer type="circle"
         id="stopsLayer"
         style={{
           circleColor: color,
@@ -61,6 +61,6 @@ export function StopMarkers({ stops, color = '#8899AA', onPress }: StopMarkerPro
           circleStrokeColor: '#FFFFFF',
         }}
       />
-    </MapboxGL.ShapeSource>
+    </GeoJSONSource>
   );
 }

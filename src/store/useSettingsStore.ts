@@ -9,7 +9,7 @@ export const CITIES: Record<string, CityConfig> = {
     id: 'samsun',
     name: 'Samsun',
     // Geliştirme (Localhost), VPS'e geçince config'den veya .env'den alacağız
-    apiBaseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://164.92.219.87:8001',
+    apiBaseUrl: process.env.EXPO_PUBLIC_API_URL || 'https://deflation-shaded-sterility.ngrok-free.dev',
     center: { lat: 41.28667, lng: 36.33 },
     bbox: {
       minLat: 40.5,

@@ -9,7 +9,11 @@
       "distribution": "internal"
     },
     "preview": {
+      "channel": "preview",
       "node": "22.16.0",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      },
       "distribution": "internal",
       "android": {
         "buildType": "apk"

@@ -1,6 +1,6 @@
 import { View, StyleSheet, useColorScheme } from 'react-native';
 // @ts-ignore
-import MapboxGL from '@maplibre/maplibre-react-native';
+import { Map, Camera, UserLocation, GeoJSONSource, Layer, SymbolLayerStyle, LineLayerStyle, CameraRef } from '@maplibre/maplibre-react-native';
 import { Colors } from '../../constants/Colors';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { MapStyles } from '../../types/transit';
@@ -19,7 +19,7 @@ import { useRouteStore } from '../../store/useRouteStore';
 import polyline from '@mapbox/polyline';
 // Set access token if required (MapLibre doesn't require one for their own styles, 
 // but since we are using CartoDB styles, they are open as well).
-MapboxGL.setAccessToken(null);
+
 
 export default function MapScreen() {
   const colorScheme = useColorScheme();
@@ -28,7 +28,7 @@ export default function MapScreen() {
   
   const city = useSettingsStore(state => state.getCurrentCity());
   const [selectedStop, setSelectedStop] = useState<SuperStop | null>(null);
-  const cameraRef = useRef<MapboxGL.Camera>(null);
+  const cameraRef = useRef<CameraRef>(null);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const router = useRouter();
   
@@ -89,10 +89,10 @@ export default function MapScreen() {
     let location = await Location.getCurrentPositionAsync({});
     setUserLocation(location);
     if (location && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [location.coords.longitude, location.coords.latitude],
-        zoomLevel: 15,
-        animationDuration: 1000,
+      cameraRef.current.flyTo({
+        center: [location.coords.longitude, location.coords.latitude],
+        zoom: 15,
+        duration: 1000
       });
     }
   };
@@ -120,19 +120,17 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapSearchBar onSearch={handleSearch} />
-      <MapboxGL.MapView
+      <Map
         style={styles.map}
-        styleURL={isDark ? MapStyles.dark : MapStyles.light}
-        logoEnabled={false}
-        attributionEnabled={false}
+        mapStyle={isDark ? MapStyles.dark : MapStyles.light}
         onLongPress={handleMapLongPress}
       >
-        <MapboxGL.Camera
+        <Camera
           ref={cameraRef}
-          zoomLevel={13}
-          centerCoordinate={[city.center.lng, city.center.lat]}
-          animationMode="flyTo"
-          animationDuration={2000}
+          zoom={13}
+          center={[city.center.lng, city.center.lat]}
+          easing="fly"
+          duration={2000}
         />
         
         {/* Tüm durakları render et (ShapeSource + CircleLayer sayesinde kasmaz) */}
@@ -164,8 +162,8 @@ export default function MapScreen() {
         
         {/* Rota Çizgisi */}
         {routeLineData && (
-          <MapboxGL.ShapeSource id="routeSource" shape={routeLineData as any}>
-            <MapboxGL.LineLayer
+          <GeoJSONSource id="routeSource" data={routeLineData as any}>
+            <Layer type="line"
               id="routeLine"
               style={{
                 lineColor: theme.tint,
@@ -174,11 +172,11 @@ export default function MapScreen() {
                 lineCap: 'round'
               }}
             />
-          </MapboxGL.ShapeSource>
+          </GeoJSONSource>
         )}
 
-        <MapboxGL.UserLocation visible={true} showsUserHeadingIndicator={true} />
-      </MapboxGL.MapView>
+        <UserLocation />
+      </Map>
 
       <LocationFAB onPress={handleCenterLocation} />
       

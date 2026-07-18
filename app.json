@@ -68,7 +68,10 @@
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/ab0b7710-faa6-49e6-af12-0944211ca41b"
+      "url": "https://u.expo.dev/ab0b7710-faa6-49e6-af12-0944211ca41b",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
     }
   }
 }

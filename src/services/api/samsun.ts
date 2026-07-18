@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchClient } from './client';
-import { SuperLineResponse, SuperStop } from '../../types/transit';
+import { SuperLineResponse, SuperStop, Vehicle } from '../../types/transit';
 
 /**
  * Samsun (ASIS) API servisleri.
@@ -14,7 +14,16 @@ export const fetchLines = async (): Promise<any[]> => {
 
 // Super-Line (Hattın TÜM verilerini tek JSON'da çeken hibrit motor)
 export const fetchSuperLine = async (code: string): Promise<SuperLineResponse> => {
-  return await fetchClient<SuperLineResponse>(`/super-line/${encodeURIComponent(code)}`);
+  const res = await fetchClient<any>(`/super-line/${encodeURIComponent(code)}`);
+  if (res.duraklar) {
+    res.duraklar = res.duraklar.map((d: any) => ({
+      ...d,
+      durak_adi: d.durak_adi || d.ad || d.isim,
+      enlem: d.enlem || d.lat?.toString(),
+      boylam: d.boylam || d.lon?.toString() || d.lng?.toString()
+    }));
+  }
+  return res as SuperLineResponse;
 };
 
 // Tüm durakları çekme (Haritaya basmak için 1627 durak)
@@ -23,12 +32,12 @@ export const fetchAllStops = async (): Promise<SuperStop[]> => {
   
   return data.map((d: any) => ({
     id: d.durak_id || d.id,
-    isim: d.durak_adi || d.isim,
+    isim: d.durak_adi || d.isim || d.ad || "Bilinmeyen Durak",
     yon: 0,
     sira: 0,
     konum: {
-      lat: parseFloat(d.enlem || d.lat),
-      lng: parseFloat(d.boylam || d.lng)
+      lat: parseFloat(d.enlem || d.lat || "0"),
+      lng: parseFloat(d.boylam || d.lng || d.lon || "0")
     }
   }));
 };
@@ -54,13 +63,31 @@ export const fetchMarineVehicles = async (): Promise<any[]> => {
 };
 
 // SAMAIR Araçları (Canlı)
-export const fetchSamairVehicles = async (): Promise<any[]> => {
-  return await fetchClient<any[]>('/samair/vehicles');
+export const fetchSamairVehicles = async (): Promise<Vehicle[]> => {
+  const res = await fetchClient<any>('/samair/vehicles');
+  const araclar = res.araçlar || [];
+  return araclar.map((v: any) => ({
+    arac_id: v.plaka,
+    plaka: v.plaka,
+    konum: { lat: parseFloat(v.enlem || "0"), lng: parseFloat(v.boylam || "0") },
+    hiz: parseFloat(v.hiz || "0"),
+    doluluk: parseInt(v.gunlukYolcu || "0"),
+    guncelleme_vakti: v.tarih || v.editDate || new Date().toISOString()
+  }));
 };
 
 // ODAK Araçları (Canlı)
-export const fetchOdakVehicles = async (): Promise<any[]> => {
-  return await fetchClient<any[]>('/odak/vehicles');
+export const fetchOdakVehicles = async (): Promise<Vehicle[]> => {
+  const res = await fetchClient<any>('/odak/vehicles');
+  const araclar = res.araçlar || [];
+  return araclar.map((v: any) => ({
+    arac_id: v.plaka,
+    plaka: v.plaka,
+    konum: { lat: parseFloat(v.enlem || "0"), lng: parseFloat(v.boylam || "0") },
+    hiz: parseFloat(v.hiz || "0"),
+    doluluk: parseInt(v.gunlukYolcu || "0"),
+    guncelleme_vakti: v.tarih || v.editDate || new Date().toISOString()
+  }));
 };
 
 // --- HOOKS ---

@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, useColorScheme, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 // @ts-ignore
-import MapboxGL from '@maplibre/maplibre-react-native';
+import { Map, Camera, UserLocation, GeoJSONSource, Layer, SymbolLayerStyle, LineLayerStyle, CameraRef } from '@maplibre/maplibre-react-native';
 import { BlurView } from 'expo-blur';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -82,17 +82,15 @@ export default function LineDetailScreen() {
   return (
     <View style={styles.container}>
       {viewMode === 'map' ? (
-        <MapboxGL.MapView
+        <Map
           style={styles.map}
-          styleURL={isDark ? MapStyles.dark : MapStyles.light}
-          logoEnabled={false}
-          attributionEnabled={false}
+          mapStyle={isDark ? MapStyles.dark : MapStyles.light}
         >
-          <MapboxGL.Camera
-            zoomLevel={12}
-            centerCoordinate={centerCoord}
-            animationMode="flyTo"
-            animationDuration={1500}
+          <Camera
+            zoom={12}
+            center={centerCoord as [number, number]}
+            duration={1500}
+            easing="fly"
           />
           
           {/* Güzergah Çizgisi */}
@@ -120,7 +118,7 @@ export default function LineDetailScreen() {
               color={theme.tint}
             />
           ))}
-        </MapboxGL.MapView>
+        </Map>
       ) : (
         <ScrollView style={[styles.listContainer, { backgroundColor: theme.background }]}>
            <View style={{height: 120}} />

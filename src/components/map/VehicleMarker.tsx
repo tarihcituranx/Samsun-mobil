@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 // @ts-ignore
-import MapboxGL from '@maplibre/maplibre-react-native';
+import { Map, Camera, UserLocation, GeoJSONSource, Layer, ViewAnnotation, SymbolLayerStyle, LineLayerStyle, CameraRef } from '@maplibre/maplibre-react-native';
 import { Vehicle } from '../../types/transit';
 import { Colors } from '../../constants/Colors';
 import { Bus } from 'lucide-react-native';
@@ -14,9 +14,9 @@ interface VehicleMarkerProps {
 
 export function VehicleMarker({ vehicle, onPress, color = Colors.light.bus }: VehicleMarkerProps) {
   return (
-    <MapboxGL.MarkerView
+    <ViewAnnotation
       id={`vehicle-${vehicle.arac_id}`}
-      coordinate={[vehicle.konum.lng, vehicle.konum.lat]}
+      lngLat={[vehicle.konum.lng, vehicle.konum.lat]}
     >
       <View style={styles.container} onTouchEnd={() => onPress?.(vehicle)}>
         <View style={[styles.marker, { borderColor: color }]}>
@@ -28,7 +28,7 @@ export function VehicleMarker({ vehicle, onPress, color = Colors.light.bus }: Ve
           </View>
         )}
       </View>
-    </MapboxGL.MarkerView>
+    </ViewAnnotation>
   );
 }
 

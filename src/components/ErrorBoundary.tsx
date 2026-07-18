@@ -34,7 +34,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       const appVersion = Application.nativeApplicationVersion || "unknown";
 
       // Backend (VPS) API Endpoint
-      await fetch("http://164.92.219.87:8001/report-crash", {
+      await fetch("https://deflation-shaded-sterility.ngrok-free.dev/report-crash", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
