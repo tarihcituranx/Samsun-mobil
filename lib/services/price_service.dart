@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 /// Mart 2026 güncel sabit fiyatlar — ağ çağrısı yapmaz (1 yıl boyunca).
 /// İstisna: Odak ve Samair fiyatları proxy'den dinamik çekilir.
 class PriceService {
-  static const String _renderBase = "https://samsun-gtfs-rt.onrender.com/api";
+  static const String _renderBase = "https://deflation-shaded-sterility.ngrok-free.dev";
 
   // ───────────────────────────────────────────────────────────────
   // Sabit fiyat tablosu — Mart 2026 güncel

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 /// Samsun Ulaşım — API Servisi v2.5
 ///
 /// Tüm API çağrıları Render proxy üzerinden geçer:
-///   https://samsun-gtfs-rt.onrender.com/api
+///   https://deflation-shaded-sterility.ngrok-free.dev
 ///
 /// Endpoint haritası:
 ///   /api/proxy/smart_stations    → ASIS SmartStations
@@ -22,7 +22,7 @@ import 'package:http/http.dart' as http;
 ///   /api/samair/*                → Render DB
 ///
 class ApiService {
-  static const String _base = 'https://samsun-gtfs-rt.onrender.com/api';
+  static const String _base = 'https://deflation-shaded-sterility.ngrok-free.dev';
 
   // ─────────────────────────────────────────────────────────────
   // API'den gelen bozuk Türkçe karakterler (Windows-1254 artifact)

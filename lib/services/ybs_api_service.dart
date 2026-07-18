@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class YbsApiService {
-  static const String _renderBase = "https://samsun-gtfs-rt.onrender.com/api";
+  static const String _renderBase = "https://deflation-shaded-sterility.ngrok-free.dev";
   
   // Singleton Pattern
   static final YbsApiService _instance = YbsApiService._internal();

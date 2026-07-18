@@ -295,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _toastLoading("🔍 '${_hedefCtrl.text}' aranıyor...");
       try {
         final query = Uri.encodeComponent(_hedefCtrl.text.trim());
-        final url = 'https://samsun-gtfs-rt.onrender.com/api/rota?lat1=${_myLocation.latitude}&lon1=${_myLocation.longitude}&end=$query';
+        final url = 'https://deflation-shaded-sterility.ngrok-free.dev/rota?lat1=${_myLocation.latitude}&lon1=${_myLocation.longitude}&end=$query';
         final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'SamsunMobilApp/2.0'}).timeout(const Duration(seconds: 15));
         if (response.statusCode == 200) {
           final data = json.decode(utf8.decode(response.bodyBytes));

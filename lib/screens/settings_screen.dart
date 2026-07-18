@@ -140,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Hesap ve Güvenlik
           SettingsSectionWidget(title: 'Hesap ve Güvenlik', children: [
             _chevronItem(Icons.vpn_key, Colors.red, 'Admin Panel Girişi', onTap: () async {
-              const url = 'https://samsun-gtfs-rt.onrender.com/admin';
+              const url = 'https://deflation-shaded-sterility.ngrok-free.dev/admin';
               if (await canLaunchUrl(Uri.parse(url))) {
                 await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
               }

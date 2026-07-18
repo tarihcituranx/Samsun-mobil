@@ -10,7 +10,7 @@ import 'package:sqflite/sqflite.dart';
 /// Hat, durak, güzergah ve sefer verilerini yönetir.
 class GtfsSyncService {
   final DBService dbHelper;
-  static const renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
+  static const renderBase = 'https://deflation-shaded-sterility.ngrok-free.dev';
 
   GtfsSyncService(this.dbHelper);
 

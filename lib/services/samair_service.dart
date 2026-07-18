@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class SamAirService {
   // Tüm çağrılar Render proxy üzerinden (proje şeması gereği)
-  static const String _renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
+  static const String _renderBase = 'https://deflation-shaded-sterility.ngrok-free.dev';
 
   // H1, H2, H3, H4, H5 hatlarını takip edeceğiz
   static final List<String> samairLines = ['H1', 'H2', 'H3', 'H4', 'H5'];

@@ -12,7 +12,7 @@ import 'package:sqflite/sqflite.dart';
 class SynchronizationService {
   final dbHelper = DBService();
   late final GtfsSyncService _gtfsSync = GtfsSyncService(dbHelper);
-  static const _renderBase = 'https://samsun-gtfs-rt.onrender.com/api';
+  static const _renderBase = 'https://deflation-shaded-sterility.ngrok-free.dev';
 
   Future<List<dynamic>> _ybsApiCall(String module, String method, {Map<String, String>? params}) async {
     try {
@@ -192,7 +192,7 @@ class SynchronizationService {
     bool proxySuccess = false;
     try {
       final response = await http.get(
-        Uri.parse('https://samsun-gtfs-rt.onrender.com/api/hat'),
+        Uri.parse('https://deflation-shaded-sterility.ngrok-free.dev/hat'),
         headers: {'User-Agent': 'SamsunMobilApp/2.0'},
       ).timeout(const Duration(seconds: 12));
       
@@ -206,7 +206,7 @@ class SynchronizationService {
             if (code.isEmpty) continue;
             try {
               final fiyatResp = await http.get(
-                Uri.parse('https://samsun-gtfs-rt.onrender.com/api/hat/fiyat/${Uri.encodeComponent(code)}'),
+                Uri.parse('https://deflation-shaded-sterility.ngrok-free.dev/hat/fiyat/${Uri.encodeComponent(code)}'),
                 headers: {'User-Agent': 'SamsunMobilApp/2.0'},
               ).timeout(const Duration(seconds: 5));
               
