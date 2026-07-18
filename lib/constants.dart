@@ -47,4 +47,4 @@ const String iadeKurallariMetni = '''İADE / ÜCRET DÜZELTME DURUMLARI
 
 // ─── OSRM YOL GEOMETRİSİ ───
 /// Ücretsiz OSRM sunucusu — duraklar arası yol geometrisi çekmek için
-const String osrmBaseUrl = 'https://router.project-osrm.org';
+const String osrmBaseUrl = 'https://seeds-humanity-visitors-approx.trycloudflare.com';

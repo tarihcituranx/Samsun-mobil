@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class UpdateService {
   static const String _versionJsonUrl =
-      'https://github.com/tarihcituranx/test/raw/main/releases/version.json';
+      'http://108.165.233.149/version.json';
 
   /// Uygulama açılışında çağrılır. Network yoksa sessizce geçer.
   static Future<void> checkForUpdate(BuildContext context) async {
