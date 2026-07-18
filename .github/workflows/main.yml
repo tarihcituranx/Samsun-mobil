@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repoyu klonla
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Flutter kur
         uses: subosito/flutter-action@v2
@@ -24,7 +24,7 @@ jobs:
           cache-key: flutter-stable-${{ runner.os }}
 
       - name: Pub cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -54,7 +54,7 @@ jobs:
     steps:
       # 1) Kodu al
       - name: Repoyu klonla
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.APK_REPO_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
 
       # 3) Pub cache
       - name: Pub cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.pub-cache
@@ -83,7 +83,7 @@ jobs:
 
       # 4) Gradle cache
       - name: Gradle cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -195,7 +195,7 @@ jobs:
       # 8) Build logları artifact
       - name: Artifacts kaydet
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-logs-${{ github.run_number }}
           path: logs/
@@ -205,7 +205,7 @@ jobs:
       # 9) Bug raporu artifact
       - name: Bug raporunu sakla
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bug-report-${{ github.run_number }}
           path: |
@@ -217,7 +217,7 @@ jobs:
       # 10) Log klasörü artifact
       - name: Log klasörünü sakla
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full-logs-${{ github.run_number }}
           path: |
