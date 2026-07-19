@@ -34,8 +34,8 @@ export default function LinesScreen() {
   const filteredLines = React.useMemo(() => {
     if (!lines) return [];
     return lines.filter((line: any) => {
-      const code = (line.kisa_isim || line.hat_kodu || line.lineCode || '').toLowerCase();
-      const name = (line.uzun_isim || line.hat_adi || line.lineName || '').toLowerCase();
+      const code = String(line.kisa_isim || line.hat_kodu || line.lineCode || '').toLowerCase();
+      const name = String(line.uzun_isim || line.hat_adi || line.lineName || '').toLowerCase();
       const query = searchQuery.toLowerCase();
       const matchesSearch = code.includes(query) || name.includes(query);
       
