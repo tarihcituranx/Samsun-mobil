@@ -9,7 +9,8 @@ import { SuperLineResponse, SuperStop, Vehicle } from '../../types/transit';
 
 // Tüm hatları listeleme
 export const fetchLines = async (): Promise<any[]> => {
-  return await fetchClient<any[]>('/lines');
+  const res = await fetchClient<any>('/lines');
+  return res.data || [];
 };
 
 // Super-Line (Hattın TÜM verilerini tek JSON'da çeken hibrit motor)

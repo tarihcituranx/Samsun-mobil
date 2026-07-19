@@ -34,8 +34,8 @@ export default function LinesScreen() {
   const filteredLines = React.useMemo(() => {
     if (!lines) return [];
     return lines.filter((line: any) => {
-      const code = (line.kisa_isim || line.hat_kodu || '').toLowerCase();
-      const name = (line.uzun_isim || line.hat_adi || '').toLowerCase();
+      const code = (line.kisa_isim || line.hat_kodu || line.lineCode || '').toLowerCase();
+      const name = (line.uzun_isim || line.hat_adi || line.lineName || '').toLowerCase();
       const query = searchQuery.toLowerCase();
       const matchesSearch = code.includes(query) || name.includes(query);
       
@@ -55,7 +55,7 @@ export default function LinesScreen() {
   }, [lines, searchQuery, selectedCategory]);
 
   const renderItem = ({ item }: { item: any }) => {
-    const lineCode = item.kisa_isim || item.hat_kodu;
+    const lineCode = item.kisa_isim || item.hat_kodu || item.lineCode;
     const isFav = favorites[lineCode];
     
     return (
@@ -70,7 +70,7 @@ export default function LinesScreen() {
               {lineCode}
             </Text>
             <Text style={[styles.lineName, { color: theme.textSecondary, ...Typography.body }]} numberOfLines={1}>
-              {item.uzun_isim || item.hat_adi}
+              {item.uzun_isim || item.hat_adi || item.lineName}
             </Text>
           </View>
           <Pressable onPress={() => toggleFavorite(lineCode)} style={{ padding: 8, marginRight: 4 }}>
@@ -134,7 +134,7 @@ export default function LinesScreen() {
       ) : (
         <FlatList
           data={filteredLines}
-          keyExtractor={(item) => item.hat_kodu || item.kisa_isim}
+          keyExtractor={(item) => item.hat_kodu || item.kisa_isim || item.lineCode}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
