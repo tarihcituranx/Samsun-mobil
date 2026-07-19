@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-android:
+    if: false # Devre dışı bırakıldı (Expo için yerel derleme sorunlu, EAS kullanılıyor)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
