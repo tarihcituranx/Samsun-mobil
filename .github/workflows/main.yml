@@ -57,7 +57,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          token: ${{ secrets.APK_REPO_TOKEN }}
 
       # 2) Flutter kur
       - name: Flutter kur
