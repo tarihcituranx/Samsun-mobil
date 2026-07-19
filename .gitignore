@@ -83,3 +83,4 @@ keystore_b64.txt
 /windows/flutter/snapshot.d
 /windows/flutter/vm_snapshot_data
 /windows/flutter/vm_snapshot_instr
+node_modules/
