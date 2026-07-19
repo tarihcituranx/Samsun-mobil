@@ -8,6 +8,7 @@ import '../services/db_service.dart';
 import '../services/api_service.dart';
 import '../services/price_service.dart';
 import '../services/route_geometry_service.dart';
+import '../services/query_client.dart';
 import '../widgets/hat_list_item_widget.dart';
 
 class HatlarScreen extends StatefulWidget {
@@ -176,7 +177,7 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   List<Map<String, dynamic>> _seferler = [];
   Map<String, dynamic>? _fiyat;
   bool _isLoading = true;
-  Timer? _liveTimer;
+  StreamSubscription? _vehicleSubscription;
   final MapController _mapController = MapController();
 
   // Ring hatları için gidiş/dönüş yön seçimi
@@ -199,13 +200,18 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   void initState() { super.initState(); _loadData(); _startLiveTracking(); }
 
   @override
-  void dispose() { _liveTimer?.cancel(); super.dispose(); }
+  void dispose() {
+    _vehicleSubscription?.cancel();
+    QueryClient().removeSubscriber('vehicles_${widget.code}');
+    super.dispose();
+  }
 
   Future<void> _loadData() async {
+    // Eski yerel sqlite DBService'i yerine doğrudan taze API (Expo stili) çağıralım
     final results = await Future.wait([
-      DBService().getDurakGuzergahi(widget.code),
-      DBService().getFiyat(widget.code),
-      DBService().getSeferler(widget.code),
+      ApiService.getHatDuraklariDB(widget.code),
+      ApiService.getHatFiyat(widget.code),
+      ApiService.getHatSeferler(widget.code),
       PriceService.getPriceForLine(widget.name, widget.kat), // Dinamik Fiyat Çekimi
     ]);
     if (mounted) {
@@ -249,16 +255,16 @@ class _HatDetailScreenState extends State<HatDetailScreen> {
   }
 
   void _startLiveTracking() {
-    _fetchVehicles();
-    _liveTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchVehicles());
-  }
-
-  Future<void> _fetchVehicles() async {
-    // Tam hat kodunu gönder — samsun.py /api/hat/arac akıllı eşleştirme yapar
-    try {
-      final vehicles = await ApiService.getHattakiAraclar(widget.code);
-      if (mounted) setState(() => _liveVehicles = vehicles);
-    } catch (e) { debugPrint('Araç çekme hatası: $e'); }
+    // Expo / React Query tarzı: otomatik polling ve stream dinleme
+    _vehicleSubscription = QueryClient().useQuery<List<Map<String, dynamic>>>(
+      queryKey: 'vehicles_${widget.code}',
+      queryFn: () => ApiService.getHattakiAraclar(widget.code),
+      refetchInterval: const Duration(seconds: 15),
+    ).listen((state) {
+      if (mounted && state.data != null) {
+        setState(() => _liveVehicles = state.data!);
+      }
+    });
   }
 
   @override

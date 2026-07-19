@@ -13,32 +13,30 @@ class SamAirService {
     List<Map<String, dynamic>> allVehicles = [];
 
     try {
-      final futures = samairLines.map((lineCode) =>
-        http.get(
-          Uri.parse('$_renderBase/proxy/realtime?lineCode=${Uri.encodeComponent(lineCode)}'),
-          headers: {'User-Agent': 'samsun_ulasim/2.0', 'Accept': 'application/json'},
-        ).timeout(const Duration(seconds: 10)).catchError((_) => http.Response('[]', 200))
-      );
-      final responses = await Future.wait(futures);
+      final r = await http.get(
+        Uri.parse('$_renderBase/samair/vehicles'),
+        headers: {'User-Agent': 'samsun_ulasim/2.0', 'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
 
-      for (var response in responses) {
-        if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-          try {
-            var decodedData = json.decode(utf8.decode(response.bodyBytes));
-            List<dynamic> data = decodedData is List ? decodedData : (decodedData is Map && decodedData.containsKey('data') ? decodedData['data'] : [decodedData]);
-
-            for (var item in data) {
-              if (item is Map<String, dynamic> && (item.containsKey('enlem') || item.containsKey('Latitude') || item.containsKey('lat'))) {
-                allVehicles.add({
-                  'lineCode': (item['HatKodu'] ?? item['LineCode'] ?? item['lineCode'] ?? 'SAMAIR').toString(),
-                  'lat': double.tryParse((item['enlem'] ?? item['Latitude'] ?? item['lat'] ?? '0').toString()) ?? 0.0,
-                  'lon': double.tryParse((item['boylam'] ?? item['Longitude'] ?? item['lon'] ?? '0').toString()) ?? 0.0,
-                  'plate': (item['plaka'] ?? item['PlateNumber'] ?? item['plate'] ?? 'Bilinmiyor').toString(),
-                  'speed': (item['hiz'] ?? item['Speed'] ?? item['speed'] ?? '0').toString(),
-                });
-              }
+      if (r.statusCode == 200 && r.bodyBytes.isNotEmpty) {
+        var decodedData = json.decode(utf8.decode(r.bodyBytes));
+        
+        if (decodedData is Map && decodedData.containsKey('araçlar')) {
+          List<dynamic> data = decodedData['araçlar'] ?? [];
+          
+          for (var item in data) {
+            if (item is Map<String, dynamic>) {
+              allVehicles.add({
+                'lineCode': (item['HatKodu'] ?? 'SAMAIR').toString(),
+                'lat': double.tryParse((item['enlem']).toString()) ?? 0.0,
+                'lon': double.tryParse((item['boylam']).toString()) ?? 0.0,
+                'plate': (item['plaka']).toString(),
+                'speed': (item['hiz'] ?? '0').toString(),
+                'yon': (item['yon'] ?? '0').toString(),
+                'gunlukYolcu': (item['gunlukYolcu'] ?? '0').toString(),
+              });
             }
-          } catch (e) { debugPrint('SamAir veri parse hatası: $e'); }
+          }
         }
       }
     } catch (e) {

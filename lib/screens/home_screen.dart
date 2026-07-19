@@ -14,6 +14,8 @@ import '../services/price_service.dart';
 import '../services/offline_service.dart';
 import '../services/update_service.dart';
 import '../services/route_geometry_service.dart';
+import '../services/query_client.dart';
+import '../services/route_service.dart';
 import 'hatlar_screen.dart';
 import 'samair_screen.dart';
 import 'odak_screen.dart';
@@ -45,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showNearbyOnly = false;
 
   String? _activeLineCode;
-  Timer? _liveTimer;
+  StreamSubscription? _vehicleSubscription;
   Map<String, dynamic> _prices = {};
   LatLng _myLocation = const LatLng(41.2867, 36.3300);
   LatLng? _targetLocation;
@@ -102,7 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _liveTimer?.cancel();
+    _vehicleSubscription?.cancel();
+    QueryClient().removeSubscriber('home_vehicles_$_activeLineCode');
     _hedefCtrl.dispose();
     OfflineService().stopMonitoring();
     super.dispose();
@@ -127,23 +130,41 @@ class _HomeScreenState extends State<HomeScreen> {
       _toastError("⚠️ Çevrimdışı modda canlı araç takibi yapılamaz");
       return;
     }
-    _liveTimer?.cancel();
+    _vehicleSubscription?.cancel();
+    if (_activeLineCode != null) {
+      QueryClient().removeSubscriber('home_vehicles_$_activeLineCode');
+    }
     _activeLineCode = lineCode;
     // RT-15: Önceki durakları temizle, yeni hat durakları yükle
     setState(() {
       _activeLineDuraklar = [];
       _activeLineRoadPolyline = [];
+      _liveVehicles = [];
     });
     _loadActiveLineDuraklar(lineCode);
     _toastInfo("📡 $lineCode hattı canlı takip başlatıldı");
-    _fetchLiveVehicles();
-    _liveTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchLiveVehicles());
+
+    _vehicleSubscription = QueryClient().useQuery<List<Map<String, dynamic>>>(
+      queryKey: 'home_vehicles_$_activeLineCode',
+      queryFn: () => ApiService.getHattakiAraclar(_activeLineCode!),
+      refetchInterval: const Duration(seconds: 15),
+    ).listen((state) {
+      if (mounted && state.data != null) {
+        final oldCount = _liveVehicles.length;
+        setState(() => _liveVehicles = state.data!);
+        if (state.data!.length != oldCount && state.data!.isNotEmpty) {
+          _toastInfo("🚌 ${state.data!.length} araç tespit edildi ($_activeLineCode)");
+        }
+      } else if (mounted && state.isError) {
+        _toastError("⚠️ Araç API hatası: ${state.errorMessage}");
+      }
+    });
   }
 
   /// RT-14: Seçili hattın tüm duraklarını haritaya yükle
   Future<void> _loadActiveLineDuraklar(String lineCode) async {
     try {
-      final duraklar = await DBService().getDurakGuzergahi(lineCode);
+      final duraklar = await ApiService.getHatDuraklariDB(lineCode);
       if (mounted) {
         setState(() => _activeLineDuraklar = duraklar);
         if (duraklar.isNotEmpty) {
@@ -169,21 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _fetchLiveVehicles() async {
-    if (_activeLineCode == null || _isOffline) return;
-    try {
-      final vehicles = await ApiService.getHattakiAraclar(_activeLineCode!);
-      if (mounted) {
-        final oldCount = _liveVehicles.length;
-        setState(() => _liveVehicles = vehicles);
-        if (vehicles.length != oldCount) {
-          _toastInfo("🚌 ${vehicles.length} araç tespit edildi ($_activeLineCode)");
-        }
-      }
-    } catch (e) {
-      _toastError("⚠️ Araç API hatası: $e");
-    }
-  }
+  // (eski _fetchLiveVehicles kaldırıldı - QueryClient devraldı)
 
   Future<void> _getLocation() async {
     _toastLoading("📍 Konum tespit ediliyor...");
@@ -258,8 +265,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() { _isRouting = true; _routePolyline = []; _routeResults = []; _targetLocation = LatLng(destLat, destLon); });
     _toastLoading("🧭 Rota hesaplanıyor...");
     try {
-      final routes = await DBService().calculateRouteLocally(
-        _myLocation.latitude, _myLocation.longitude, destLat, destLon, radiusParams: 2.0
+      final routes = await RouteService.getOTPRoute(
+        _myLocation.latitude, _myLocation.longitude, destLat, destLon
       );
       if (routes.isNotEmpty) {
         setState(() {
@@ -273,9 +280,6 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         });
         _toastSuccess("✅ ${routes.length} rota bulundu");
-        final firstCode = routes[0]['desc']?.toString() ?? '';
-        final codeMatch = RegExp(r'([A-Z0-9]+) hattına').firstMatch(firstCode);
-        if (codeMatch != null) _startLiveTracking(codeMatch.group(1)!);
         _showRouteSheet();
       } else {
         _toastError("❌ Bu güzergah için rota bulunamadı");
@@ -290,41 +294,26 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_targetLocation != null) {
       await _calculateRouteFromCoords(_targetLocation!.latitude, _targetLocation!.longitude);
     } else {
-      // Sunucu tarafında Nominatim geocoding kullan (gerçek mekan arama)
+      // Nominatim geocoding kullanılarak aranan metni koordinata çevirme
       setState(() { _isRouting = true; _routePolyline = []; _routeResults = []; });
       _toastLoading("🔍 '${_hedefCtrl.text}' aranıyor...");
       try {
-        final query = Uri.encodeComponent(_hedefCtrl.text.trim());
-        final url = 'https://deflation-shaded-sterility.ngrok-free.dev/rota?lat1=${_myLocation.latitude}&lon1=${_myLocation.longitude}&end=$query';
-        final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'SamsunMobilApp/2.0'}).timeout(const Duration(seconds: 15));
-        if (response.statusCode == 200) {
-          final data = json.decode(utf8.decode(response.bodyBytes));
-          if (data is List && data.isNotEmpty) {
-            setState(() {
-              _routeResults = data.map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r)).toList();
-              final coords = _routeResults[0]['polyline'] as List?;
-              if (coords != null && coords.isNotEmpty) {
-                _routePolyline = coords.map((c) => LatLng((c[0] as num).toDouble(), (c[1] as num).toDouble())).toList();
-                if (_routePolyline.length > 1) {
-                  _mapController.fitCamera(CameraFit.bounds(bounds: LatLngBounds.fromPoints(_routePolyline), padding: const EdgeInsets.all(50)));
-                }
-              }
-            });
-            _toastSuccess("✅ ${_routeResults.length} rota bulundu");
-            _showRouteSheet();
-          } else {
-            _toastError("❌ '${_hedefCtrl.text}' için rota bulunamadı");
-          }
-        } else if (response.statusCode == 400) {
-          final err = json.decode(utf8.decode(response.bodyBytes));
-          _toastError("❌ ${err['error'] ?? 'Konum bulunamadı'}");
+        final query = _hedefCtrl.text.trim();
+        final destCoords = await RouteService.geocodeAddress(query);
+        if (destCoords != null) {
+          _targetLocation = destCoords;
+          await _calculateRouteFromCoords(destCoords.latitude, destCoords.longitude);
         } else {
-          _toastError("❌ Sunucu hatası");
+          _toastError("❌ '$query' konumu bulunamadı. Lütfen daha belirgin bir isim girin.");
         }
-      } catch (e) { _toastError("❌ Rota hatası: $e"); }
-      finally { setState(() => _isRouting = false); }
+      } catch (e) {
+        _toastError("⚠️ Bağlantı hatası: $e");
+      } finally {
+        setState(() => _isRouting = false);
+      }
     }
   }
+
 
   Future<void> _openInGoogleMaps() async {
     if (_targetLocation == null) return;

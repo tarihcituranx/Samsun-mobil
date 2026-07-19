@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
 import '../services/ybs_api_service.dart';
 import '../services/samair_service.dart';
+import '../services/query_client.dart';
 import '../widgets/samair_vehicle_detail_widget.dart';
 
 class SamAirScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
   final MapController _mapController = MapController();
   List<dynamic> _liveBuses = [];
   bool _isLoading = true;
-  Timer? _timer;
+  StreamSubscription? _vehicleSubscription;
   late TabController _tabController;
 
   // Çarşamba Havaalanı Konumu
@@ -45,20 +46,33 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
-    _fetchLiveBuses();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchLiveBuses());
+    _startLiveTracking();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _vehicleSubscription?.cancel();
+    QueryClient().removeSubscriber('samair_vehicles');
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchLiveBuses() async {
-    // Tüm araçlar (SamAir dahil) ASIS RealTimeData ile konum gösteriyor
-    // 1. Önce Render proxy üzerinden ASIS RealTimeData'yı dene (H1-H5 paralel)
+  void _startLiveTracking() {
+    _vehicleSubscription = QueryClient().useQuery<List<dynamic>>(
+      queryKey: 'samair_vehicles',
+      queryFn: _fetchAllSamAirBuses,
+      refetchInterval: const Duration(seconds: 15),
+    ).listen((state) {
+      if (mounted && state.data != null) {
+        setState(() {
+          _liveBuses = state.data!;
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  Future<List<dynamic>> _fetchAllSamAirBuses() async {
     List<dynamic> allBuses = [];
     try {
       final results = await Future.wait(
@@ -73,16 +87,10 @@ class _SamAirScreenState extends State<SamAirScreen> with SingleTickerProviderSt
         allBuses.addAll(vehicles);
       }
     } catch (e) { debugPrint('SamAir araç çekme hatası: $e'); }
-    // 2. Proxy başarısız olursa direkt ASIS dene (SamAirService)
     if (allBuses.isEmpty) {
       allBuses = await SamAirService.getLiveSamAirBuses();
     }
-    if (mounted) {
-      setState(() {
-        _liveBuses = allBuses;
-        _isLoading = false;
-      });
-    }
+    return allBuses;
   }
 
   @override

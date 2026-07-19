@@ -2,7 +2,7 @@ name: Samsun Mobil — Analiz ve APK Derle1
 on:
   push:
     branches:
-      - main
+      - '**'
   workflow_dispatch:
 
 permissions:

@@ -177,36 +177,21 @@ class ApiService {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 2. HAT CANLI ARAÇLAR
-  //    Birincil → /api/hat/arac/{code}    (DB eşleştirmeli, yakin durak var)
-  //    Fallback → /api/proxy/realtime     (yalnızca HTTP/ağ hatasında)
-  //
-  //    NOT: Birincil [] dönerse araç yok demektir, fallback çalışmaz.
-  //    Fallback yalnızca r1 == null veya statusCode != 200 ise devreye girer.
+  // 2. HAT CANLI ARAÇLAR (Modern /super-line API)
   // ═══════════════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getHattakiAraclar(
       String lineCode) async {
     final encoded = Uri.encodeComponent(lineCode);
+    final r = await _get('$_base/super-line/$encoded');
+    if (r == null || r.statusCode != 200 || r.bodyBytes.isEmpty) return [];
 
-    // ── Birincil ──────────────────────────────────────────────────
-    final r1 = await _get('$_base/hat/arac/$encoded');
-    if (r1 != null && r1.statusCode == 200 && r1.bodyBytes.isNotEmpty) {
-      final data = json.decode(utf8.decode(r1.bodyBytes));
-      if (data is List) return _parseVehicles(data, lineCode);
-    }
+    final decoded = json.decode(utf8.decode(r.bodyBytes));
+    if (decoded is! Map<String, dynamic>) return [];
 
-    // ── Fallback: proxy/realtime ───────────────────────────────────
-    debugPrint('getHattakiAraclar: birincil hata — fallback proxy/realtime ($lineCode)');
-    final r2 = await _get(
-      '$_base/proxy/realtime?lineCode=$encoded',
-      timeoutSec: 14,
-    );
-    if (r2 != null && r2.statusCode == 200 && r2.bodyBytes.isNotEmpty) {
-      final data = json.decode(utf8.decode(r2.bodyBytes));
-      if (data is List) return _parseVehicles(data, lineCode);
-    }
+    final canliAraclar = decoded['canli_araclar'];
+    if (canliAraclar == null || canliAraclar['data'] == null) return [];
 
-    return [];
+    return _parseVehicles(canliAraclar['data'], lineCode);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -235,23 +220,23 @@ class ApiService {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 4. HAT DURAKLARI — DB (tramvay koordinat düzeltmeleri dahil)
-  //    GET /api/hat/durak/{code}
-  //
-  //    Alanlar: hat, durakId, ad, sira, lat, lon
+  // 4. HAT DURAKLARI (Modern /super-line API)
   // ═══════════════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getHatDuraklariDB(
       String lineCode) async {
-    final url = '$_base/hat/durak/${Uri.encodeComponent(lineCode)}';
-    final r = await _get(url);
+    final encoded = Uri.encodeComponent(lineCode);
+    final r = await _get('$_base/super-line/$encoded');
     if (r == null || r.statusCode != 200 || r.bodyBytes.isEmpty) return [];
 
-    return _list(json.decode(utf8.decode(r.bodyBytes)))
+    final decoded = json.decode(utf8.decode(r.bodyBytes));
+    if (decoded is! Map || decoded['duraklar'] == null) return [];
+
+    return _list(decoded['duraklar'])
         .whereType<Map<String, dynamic>>()
         .map((item) => {
-              'hat':     _s(item['hat']),
+              'hat':     lineCode,
               'durakId': _s(item['durak_id'] ?? item['id']),
-              'ad':      _s(item['ad']),
+              'ad':      _s(item['ad'] ?? item['isim']),
               'sira':    (item['sira'] as num?)?.toInt() ?? 0,
               'lat':     (item['lat']  as num?)?.toDouble() ?? 0.0,
               'lon':     (item['lon']  as num?)?.toDouble() ?? 0.0,
@@ -378,32 +363,39 @@ class ApiService {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 9. HAT SEFER SAATLERİ (DB — statik, API'den çekilmiş)
-  //    GET /api/hat/sefer/{code}
-  //
-  //    Alanlar: hat, saat, yon ("Gidiş"/"Dönüş"), gun (hi/hs)
+  // 9. HAT SEFER SAATLERİ (Modern /super-line API)
   // ═══════════════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getHatSeferler(
       String lineCode) async {
-    final r = await _get('$_base/hat/sefer/${Uri.encodeComponent(lineCode)}');
+    final r = await _get('$_base/super-line/${Uri.encodeComponent(lineCode)}');
     if (r == null || r.statusCode != 200 || r.bodyBytes.isEmpty) return [];
 
-    return _list(json.decode(utf8.decode(r.bodyBytes)))
-        .whereType<Map<String, dynamic>>()
-        .map((item) => {
-              'hat':  _s(item['hat']),
-              'saat': _s(item['saat']),
-              'yon':  _s(item['yon']),
-              'gun':  _s(item['gun']),
-            })
-        .toList();
+    final decoded = json.decode(utf8.decode(r.bodyBytes));
+    if (decoded is! Map || decoded['saatler'] == null) return [];
+
+    final saatlerData = decoded['saatler'];
+    if (saatlerData is! Map) return [];
+
+    final List<Map<String, dynamic>> flattened = [];
+    saatlerData.forEach((gun, saatList) {
+      if (saatList is List) {
+        for (var s in saatList) {
+          if (s is Map) {
+            flattened.add({
+              'hat':  lineCode,
+              'saat': _s(s['saat']),
+              'yon':  _s(s['yon']),
+              'gun':  gun.toString(),
+            });
+          }
+        }
+      }
+    });
+    return flattened;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // 10. HAT FİYATI (DB — Samulaş web + sabit fiyatlar)
-  //     GET /api/hat/fiyat/{code}
-  //
-  //     Alanlar: tam_fiyat, indirimli_fiyat, aktarma1, aktarma2, hat_adi
+  // 10. HAT FİYATI (Modern /super-line API)
   // ═══════════════════════════════════════════════════════════════════
   static Future<Map<String, dynamic>> getHatFiyat(String lineCode) async {
     const fallback = <String, dynamic>{
@@ -414,20 +406,21 @@ class ApiService {
       'hat_adi': '',
     };
 
-    final r = await _get('$_base/hat/fiyat/${Uri.encodeComponent(lineCode)}');
-    if (r == null || r.statusCode != 200 || r.bodyBytes.isEmpty) {
-      return fallback;
-    }
+    final r = await _get('$_base/super-line/${Uri.encodeComponent(lineCode)}');
+    if (r == null || r.statusCode != 200 || r.bodyBytes.isEmpty) return fallback;
 
     final decoded = json.decode(utf8.decode(r.bodyBytes));
-    if (decoded is! Map<String, dynamic>) return fallback;
+    if (decoded is! Map || decoded['fiyat'] == null) return fallback;
+    
+    final fiyat = decoded['fiyat'];
+    if (fiyat is! Map) return fallback;
 
     return {
-      'tam_fiyat':       (decoded['tam_fiyat']       as num?)?.toDouble() ?? 20.0,
-      'indirimli_fiyat': (decoded['indirimli_fiyat'] as num?)?.toDouble() ?? 14.0,
-      'aktarma1':        _s(decoded['aktarma1'], 'Ücretsiz'),
-      'aktarma2':        (decoded['aktarma2']         as num?)?.toDouble() ?? 0.0,
-      'hat_adi':         _s(decoded['hat_adi']),
+      'tam_fiyat':       (fiyat['tam_fiyat'] as num?)?.toDouble() ?? 20.0,
+      'indirimli_fiyat': (fiyat['egitim_fiyat'] as num?)?.toDouble() ?? 14.0,
+      'aktarma1':        _s(fiyat['aktarma'], 'Ücretsiz'),
+      'aktarma2':        0.0,
+      'hat_adi':         _s(fiyat['kategori']),
     };
   }
 
